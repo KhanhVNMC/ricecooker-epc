@@ -8,4 +8,7 @@ add_executable(ricecooker main.c
         src/xthreads/xthreads.h
         src/service/test.c
         src/rcplatform/platform.h
+        src/service/displaydriver.h
+        src/rcplatform/mem.h
+        src/service/displaydriver.c
 )

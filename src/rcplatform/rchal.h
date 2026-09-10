@@ -27,13 +27,14 @@ enum : bitmask8_t {
     RC_BTN_CANCEL = 1u << 1, // huy
     RC_BTN_MODE   = 1u << 2, // che do
     RC_BTN_INCR   = 1u << 3, // increment
-    RC_BTN_DECR   = 1u << 4 // decrement
+    RC_BTN_DECR   = 1u << 4  // decrement
 };
 
 void rc_init_hal(void);
 
 void rc_display_set_segments(bitmask8_t bitmask);
-void rc_display_digit_set(uint8_t digit, bool on);
+void rc_display_digit_on(uint8_t digit);
+void rc_display_digit_off_all();
 
 float rc_sensor_get_temp(rc_temp_sensor_t sensor);
 
