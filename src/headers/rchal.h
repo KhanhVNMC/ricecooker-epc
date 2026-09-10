@@ -12,17 +12,6 @@ typedef enum : uint8_t {
 } rc_temp_sensor_t;
 
 enum : bitmask8_t {
-    RC_SEG_A  = 1u << 0, // LSB (A)
-    RC_SEG_B  = 1u << 1,
-    RC_SEG_C  = 1u << 2,
-    RC_SEG_D  = 1u << 3,
-    RC_SEG_E  = 1u << 4,
-    RC_SEG_F  = 1u << 5,
-    RC_SEG_G  = 1u << 6,
-    RC_SEG_DP = 1u << 7 // MSB (DP)
-};
-
-enum : bitmask8_t {
     RC_BTN_START  = 1u << 0, // bat dau nau com
     RC_BTN_CANCEL = 1u << 1, // huy
     RC_BTN_MODE   = 1u << 2, // che do
@@ -32,9 +21,9 @@ enum : bitmask8_t {
 
 void rc_init_hal(void);
 
-void rc_display_set_segments(bitmask8_t bitmask);
-void rc_display_digit_on(uint8_t digit);
-void rc_display_digit_off_all();
+void rc_tm1637dp_start(void);
+void rc_tm1637dp_write_byte(uint8_t byte);
+void rc_tm1637dp_stop(void);
 
 float rc_sensor_get_temp(rc_temp_sensor_t sensor);
 

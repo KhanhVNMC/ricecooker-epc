@@ -3,12 +3,16 @@ project(ricecooker C)
 
 set(CMAKE_C_STANDARD 23)
 
-add_executable(ricecooker main.c
-        src/rcplatform/rchal.h
-        src/xthreads/xthreads.h
-        src/service/test.c
-        src/rcplatform/platform.h
-        src/service/displaydriver.h
-        src/rcplatform/mem.h
-        src/service/displaydriver.c
+add_executable(ricecooker
+        src/main/test.c
+        src/impl/tm1637dv.c
+        src/impl/unix/d_unix_rchal.c
+        src/impl/unix/d_unix_mem.c
+        src/impl/unix/d_unix_platform.c
+        src/impl/unix/d_unix_xthreads.c
+        src/impl/stm32arm/rtosimpl.c
+)
+
+target_include_directories(ricecooker PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
