@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "headers/rchal.h"
+#include "include/rchal.h"
 #include <time.h>
 
 static float sensor_values[COUNT_RC_SENSORS] = {
@@ -49,6 +49,14 @@ float rc_sensor_get_temp(rc_temp_sensor_t sensor) {
     if (sensor >= COUNT_RC_SENSORS) {
         return 0.0f;
     }
+    // what the fuck is this man
+    if (heater_state) {
+        sensor_values[RC_SENSOR_HEATER]++;
+        sensor_values[RC_SENSOR_POT] += 0.9f;
+    } else {
+        if (sensor_values[RC_SENSOR_HEATER] >= 25) sensor_values[RC_SENSOR_HEATER] -= 1.f;
+        if (sensor_values[RC_SENSOR_POT] >= 25) sensor_values[RC_SENSOR_POT] -= 0.5f;
+    }
     return sensor_values[sensor];
 }
 
@@ -58,7 +66,11 @@ bitmask8_t rc_buttons_get_state(void) {
 
 void rc_heater_set(bool on) {
     heater_state = on;
-    printf("HEATER %s\n", on ? "ON" : "OFF");
+    printf("HEATER %s (HEATER=%f;POT=%f)\n", on ? "ON" : "OFF", sensor_values[RC_SENSOR_HEATER],  sensor_values[RC_SENSOR_POT]);
+}
+
+bool rc_heater_is_on() {
+    return heater_state;
 }
 
 uint32_t rc_time_current_millis(void) {

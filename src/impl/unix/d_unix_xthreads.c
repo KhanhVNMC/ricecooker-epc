@@ -1,4 +1,4 @@
-#include "headers/xthreads.h"
+#include "include/xthreads.h"
 #include <pthread.h>
 #include <sched.h>
 #include <stdlib.h>
@@ -11,6 +11,7 @@ typedef struct {
     void *args;
 } unix_xthread_t;
 
+static pthread_mutex_t mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void *xthread_entry(void *arg) {
     const unix_xthread_t *thread = arg;
@@ -59,4 +60,12 @@ void xthreads_sleep(uint32_t ms) {
 
 void xthreads_shutdown(void) {
     pthread_exit(NULL);
+}
+
+void xthreads_csenter(void) {
+    pthread_mutex_lock(&mtx);
+}
+
+void xthreads_csexit(void) {
+    pthread_mutex_unlock(&mtx);
 }

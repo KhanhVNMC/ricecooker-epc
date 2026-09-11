@@ -1,4 +1,4 @@
-#include "headers/platform.h"
+#include "include/platform.h"
 
 int main() {
     platform_main();

@@ -5,12 +5,15 @@ set(CMAKE_C_STANDARD 23)
 
 add_executable(ricecooker
         src/main/test.c
-        src/impl/tm1637dv.c
+        src/drivers/tm1637dv.c
         src/impl/unix/d_unix_rchal.c
         src/impl/unix/d_unix_mem.c
         src/impl/unix/d_unix_platform.c
         src/impl/unix/d_unix_xthreads.c
-        src/impl/stm32arm/rtosimpl.c
+        src/impl/freertos/rtosimpl.c
+        src/include/heaterctl.h
+        src/drivers/heaterctl.c
+        src/include/cmath.h
 )
 
 target_include_directories(ricecooker PRIVATE

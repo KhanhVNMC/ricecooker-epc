@@ -30,6 +30,7 @@ float rc_sensor_get_temp(rc_temp_sensor_t sensor);
 bitmask8_t rc_buttons_get_state(void);
 
 void rc_heater_set(bool on);
+bool rc_heater_is_on(void);
 
 uint32_t rc_time_current_millis(void);
 

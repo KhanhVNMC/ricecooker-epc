@@ -1,5 +1,5 @@
-#include "../headers/tm1637dv.h"
-#include "../headers/rchal.h"
+#include "include/tm1637dv.h"
+#include "include/rchal.h"
 
 #define TM_CMD_DATA_AUTO_INC        0x40
 #define TM_CF_CONTROL_MASK          0x80

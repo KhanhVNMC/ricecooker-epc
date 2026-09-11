@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "headers/mem.h"
+#include "include/mem.h"
 
 void *xmalloc(size_t size) {
     void *mal = malloc(size);

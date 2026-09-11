@@ -13,5 +13,7 @@ void xthreads_stop(xthread_handle_t handle);
 void xthreads_yield(void);
 void xthreads_sleep(uint32_t ms);
 void xthreads_shutdown(void);
+void xthreads_csenter(void);
+void xthreads_csexit(void);
 
 #endif //XTHREADS_H
