@@ -1,6 +1,8 @@
 #include <stdio.h>
-#include "include/rchal.h"
 #include <time.h>
+
+#include "fake_tm1637.h"
+#include "include/rchal.h"
 
 static float sensor_values[COUNT_RC_SENSORS] = {
     [RC_SENSOR_POT] = 25.0f,
@@ -10,42 +12,16 @@ static float sensor_values[COUNT_RC_SENSORS] = {
 static bitmask8_t button_state = 0;
 static bool heater_state = false;
 
-static bool tm_transaction_open = false;
-
 void rc_init_hal(void) {
     button_state = 0;
     heater_state = false;
     sensor_values[RC_SENSOR_POT] = 25.0f;
     sensor_values[RC_SENSOR_HEATER] = 25.0f;
-    tm_transaction_open = false;
+    tm_init();
     printf("RC HAL (UNIX) INIT'ED\n");
 }
 
-void rc_tm1637dp_start(void) {
-    tm_transaction_open = true;
-    printf("TM1637 START\n");
-}
-
-void rc_tm1637dp_write_byte(uint8_t byte) {
-    if (!tm_transaction_open) {
-        fprintf(stderr,
-            "TM1637 ERROR: write_byte(0x%02X) outside transaction\n", byte
-        );
-        return;
-    }
-    printf("TM1637 BYTE 0x%02X\n", byte);
-}
-
-void rc_tm1637dp_stop(void) {
-    if (!tm_transaction_open) {
-        fprintf(stderr,"TM1637 ERROR: STOP without START\n");
-        return;
-    }
-    printf("TM1637 STOP\n");
-    tm_transaction_open = false;
-}
-
-float rc_sensor_get_temp(rc_temp_sensor_t sensor) {
+float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
     if (sensor >= COUNT_RC_SENSORS) {
         return 0.0f;
     }
@@ -54,8 +30,12 @@ float rc_sensor_get_temp(rc_temp_sensor_t sensor) {
         sensor_values[RC_SENSOR_HEATER]++;
         sensor_values[RC_SENSOR_POT] += 0.9f;
     } else {
-        if (sensor_values[RC_SENSOR_HEATER] >= 25) sensor_values[RC_SENSOR_HEATER] -= 1.f;
-        if (sensor_values[RC_SENSOR_POT] >= 25) sensor_values[RC_SENSOR_POT] -= 0.5f;
+        if (sensor_values[RC_SENSOR_HEATER] >= 25) {
+            sensor_values[RC_SENSOR_HEATER] -= 1.0f;
+        }
+        if (sensor_values[RC_SENSOR_POT] >= 25) {
+            sensor_values[RC_SENSOR_POT] -= 0.5f;
+        }
     }
     return sensor_values[sensor];
 }
@@ -64,20 +44,25 @@ bitmask8_t rc_buttons_get_state(void) {
     return button_state;
 }
 
-void rc_heater_set(bool on) {
+void rc_heater_set(const bool on) {
+    if (heater_state != on) printf(
+        "HEATER %s (HEATER=%f;POT=%f)\n",
+        on ? "ON" : "OFF",
+        sensor_values[RC_SENSOR_HEATER],
+        sensor_values[RC_SENSOR_POT]
+    );
     heater_state = on;
-    printf("HEATER %s (HEATER=%f;POT=%f)\n", on ? "ON" : "OFF", sensor_values[RC_SENSOR_HEATER],  sensor_values[RC_SENSOR_POT]);
 }
 
-bool rc_heater_is_on() {
+bool rc_heater_is_on(void) {
     return heater_state;
 }
 
 uint32_t rc_time_current_millis(void) {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
-    return (uint32_t)(
-        (uint64_t)ts.tv_sec * 1000u +
-        (uint64_t)ts.tv_nsec / 1000000u
+    return (uint32_t) (
+        (uint64_t) ts.tv_sec * 1000u +
+        (uint64_t) ts.tv_nsec / 1000000u
     );
 }

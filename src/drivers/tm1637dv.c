@@ -7,6 +7,13 @@
 
 #define DISPLAY_MAX_BRIGHTNESS      0b111
 
+/**
+ *  _A_
+ * │F  │B .DP
+ *  -G-
+ * │E  │C .DP
+ *  ‾D‾
+ */
 static constexpr bitmask8_t digit_to_dp_matrix[] = {
     /*0*/ RC_SEG_A | RC_SEG_B | RC_SEG_C | RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*1*/            RC_SEG_B | RC_SEG_C ,
@@ -20,13 +27,21 @@ static constexpr bitmask8_t digit_to_dp_matrix[] = {
     /*9*/ RC_SEG_A | RC_SEG_B | RC_SEG_C | RC_SEG_D |            RC_SEG_F | RC_SEG_G,
     /*P*/ RC_SEG_A | RC_SEG_B                       | RC_SEG_E | RC_SEG_F | RC_SEG_G,
     /*O*/                       RC_SEG_C | RC_SEG_D | RC_SEG_E |            RC_SEG_G,
-    /*R*/                                             RC_SEG_E |            RC_SEG_G,
-    /*I*/                       RC_SEG_C                                            , // im serious
+    /*R*/ RC_SEG_A | RC_SEG_B |                       RC_SEG_E | RC_SEG_F           ,
+    /*I*/            RC_SEG_B | RC_SEG_C                                            , // just 1
     /*C*/ RC_SEG_A |                       RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*E*/ RC_SEG_A |                       RC_SEG_D | RC_SEG_E | RC_SEG_F | RC_SEG_G,
     /*S*/ RC_SEG_A |            RC_SEG_C | RC_SEG_D |            RC_SEG_F | RC_SEG_G, // just the 5
     /*U*/            RC_SEG_B | RC_SEG_C | RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*K*/ RC_SEG_A |            RC_SEG_C |            RC_SEG_E | RC_SEG_F | RC_SEG_G,
+    /*F*/ RC_SEG_A |                                  RC_SEG_E | RC_SEG_F | RC_SEG_G,
+    /*T*/                                  RC_SEG_D | RC_SEG_E | RC_SEG_F | RC_SEG_G,
+    /*A*/ RC_SEG_A | RC_SEG_B | RC_SEG_C |            RC_SEG_E | RC_SEG_F | RC_SEG_G,
+    /*H*/            RC_SEG_B | RC_SEG_C |            RC_SEG_E | RC_SEG_F | RC_SEG_G,
+    /*D*/            RC_SEG_B | RC_SEG_C | RC_SEG_D | RC_SEG_E |            RC_SEG_G,
+    /*L*/                                  RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
+    /*Y*/            RC_SEG_B | RC_SEG_C | RC_SEG_D |            RC_SEG_F | RC_SEG_G,
+    /*°*/ RC_SEG_A | RC_SEG_B |                                  RC_SEG_F | RC_SEG_G,
 };
 
 void display_set_enabled(const bool on) {

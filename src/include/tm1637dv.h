@@ -23,6 +23,14 @@ typedef enum : uint8_t {
     CHAR_S = 16,
     CHAR_U = 17,
     CHAR_K = 18,
+    CHAR_F = 19,
+    CHAR_T = 20,
+    CHAR_A = 21,
+    CHAR_H = 22,
+    CHAR_D = 23,
+    CHAR_L = 24,
+    CHAR_Y = 25,
+    CHAR_DEGREE = 26,
     CHAR_NULL = 0xFF,
 } digit_t;
 

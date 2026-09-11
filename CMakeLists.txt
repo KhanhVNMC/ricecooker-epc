@@ -14,6 +14,8 @@ add_executable(ricecooker
         src/include/heaterctl.h
         src/drivers/heaterctl.c
         src/include/cmath.h
+        src/impl/unix/fake_tm1637.h
+        src/impl/unix/fake_tm1637.c
 )
 
 target_include_directories(ricecooker PRIVATE
