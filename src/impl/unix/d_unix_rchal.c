@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 
-#include "fake_tm1637.h"
+#include "fake_io.h"
 #include "include/rchal.h"
 
 static float sensor_values[COUNT_RC_SENSORS] = {
@@ -9,16 +9,16 @@ static float sensor_values[COUNT_RC_SENSORS] = {
     [RC_SENSOR_HEATER] = 25.0f,
 };
 
-static bitmask8_t button_state = 0;
 static bool heater_state = false;
 
 void rc_init_hal(void) {
-    button_state = 0;
     heater_state = false;
     sensor_values[RC_SENSOR_POT] = 25.0f;
     sensor_values[RC_SENSOR_HEATER] = 25.0f;
     tm_init();
+    btns_init();
     printf("RC HAL (UNIX) INIT'ED\n");
+    printf("Q=SELECT W=CANCEL E=OPTIONS R=INCR T=DECR\n");
 }
 
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
@@ -38,10 +38,6 @@ float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
         }
     }
     return sensor_values[sensor];
-}
-
-bitmask8_t rc_buttons_get_state(void) {
-    return button_state;
 }
 
 void rc_heater_set(const bool on) {

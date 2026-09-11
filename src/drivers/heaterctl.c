@@ -2,8 +2,8 @@
 #include "include/cmath.h"
 #include "include/xthreads.h"
 
-#define THERMISTOR_MIN_TEMP   (-20.f)
-#define THERMISTOR_MAX_TEMP   (120.f)
+#define THERMISTOR_MIN_TEMP   (-5.f)
+#define THERMISTOR_MAX_TEMP   (110.f)
 #define THERMISTOR_HEADROOM   (4.f)
 #define HEATERCTL_INTERVAL    (100) // ms
 

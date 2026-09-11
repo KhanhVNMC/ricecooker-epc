@@ -41,6 +41,7 @@ static constexpr bitmask8_t digit_to_dp_matrix[] = {
     /*D*/            RC_SEG_B | RC_SEG_C | RC_SEG_D | RC_SEG_E |            RC_SEG_G,
     /*L*/                                  RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*Y*/            RC_SEG_B | RC_SEG_C | RC_SEG_D |            RC_SEG_F | RC_SEG_G,
+    /*N*/ RC_SEG_A | RC_SEG_B | RC_SEG_C |            RC_SEG_E | RC_SEG_F           ,
     /*°*/ RC_SEG_A | RC_SEG_B |                                  RC_SEG_F | RC_SEG_G,
 };
 

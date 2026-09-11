@@ -2,5 +2,6 @@
 #define RICECOOKER_FAKE_TM1637_H
 
 void tm_init(void);
+void btns_init(void);
 
 #endif //RICECOOKER_FAKE_TM1637_H

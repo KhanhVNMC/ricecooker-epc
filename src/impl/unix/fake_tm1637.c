@@ -26,6 +26,7 @@ static const char *get_color(const uint8_t digit, const uint8_t segment) {
 }
 
 static void printsegchars(uint8_t digits[4]) {
+    printf("\x1b[2J\x1b[H");
     printf(" %s⎽⎽⎽   %s⎽⎽⎽     %s⎽⎽⎽   %s⎽⎽⎽\n",
         get_color(digits[0], RC_SEG_A),
         get_color(digits[1], RC_SEG_A),

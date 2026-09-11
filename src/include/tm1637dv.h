@@ -30,7 +30,8 @@ typedef enum : uint8_t {
     CHAR_D = 23,
     CHAR_L = 24,
     CHAR_Y = 25,
-    CHAR_DEGREE = 26,
+    CHAR_N = 26,
+    CHAR_DEGREE = 27,
     CHAR_NULL = 0xFF,
 } digit_t;
 
