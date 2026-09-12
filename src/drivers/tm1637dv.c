@@ -61,7 +61,21 @@ void display_set_brightness(const uint8_t brightness) {
     rc_tm1637dp_stop();
 }
 
+// cache
+static digit_t last_digits[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
+static bool last_colon = false;
+
 void display_set_characters(const digit_t digits[4], const bool colon) {
+    // prevent bus spamming
+    bool changed = false;
+    for (uint8_t i = 0; i < 4; i++) {
+        if (last_digits[i] != digits[i]) {
+            changed = true;
+            break;
+        }
+    }
+    if (!changed && (colon == last_colon)) return;
+
     // auto increment mode to not have to manually kt & send
     rc_tm1637dp_start();
     rc_tm1637dp_write_byte(TM_CMD_DATA_AUTO_INC);
@@ -79,4 +93,10 @@ void display_set_characters(const digit_t digits[4], const bool colon) {
         rc_tm1637dp_write_byte(mask);
     }
     rc_tm1637dp_stop();
+
+    // update cached
+    for (uint8_t i = 0; i < 4; i++) {
+        last_digits[i] = digits[i];
+    }
+    last_colon = colon;
 }

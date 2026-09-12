@@ -15,7 +15,9 @@ typedef enum : uint8_t {
     STATE_CF_MANUAL_TIME,
     // config: delayed
     STATE_CF_DELAYED_TIME,
-    STATE_CF_DELAYED_MODE_SELECT
+    STATE_CF_DELAYED_MODE_SELECT,
+
+    COUNT_APP_STATES
 } app_state_t;
 
 typedef enum {
@@ -27,6 +29,8 @@ typedef enum {
     MODE_HOLD_WARM, // nac u noi com
     MODE_MANUAL_USER, // tu chinh
     MODE_DELAYED_EXEC, // delay
+
+    COUNT_COOKING_MODES
 } cooking_mode_t;
 
 #endif //RICECOOKER_RICECOOKER_H

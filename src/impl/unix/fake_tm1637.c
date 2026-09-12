@@ -4,10 +4,15 @@
 #include "include/tm1637dv.h"
 
 #define TM_RAM_SIZE 6
-#pragma once
+#define KDE_KONSOLE
 
+#ifdef KDE_KONSOLE
+#define COLOR_ON    "\x1b[0m\x1b[1m\x1b[91m"
+#define COLOR_OFF   "\x1b[8m"
+#else
 #define COLOR_ON    "\x1b[0m\x1b[1m\x1b[91m"
 #define COLOR_OFF   "\x1b[1m\x1b[90m"
+#endif
 #define COLOR_RESET "\x1b[0m"
 
 // fake TM1637 micro states
