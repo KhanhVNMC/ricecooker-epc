@@ -100,3 +100,28 @@ void display_set_characters(const digit_t digits[4], const bool colon) {
     }
     last_colon = colon;
 }
+
+void display_clear_cache(void) {
+    for (uint8_t i = 0; i < 4; i++) {
+        last_digits[i] = CHAR_NULL;
+    }
+    last_colon = false;
+}
+
+void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
+    // auto increment mode to not have to manually kt & send
+    rc_tm1637dp_start();
+    rc_tm1637dp_write_byte(TM_CMD_DATA_AUTO_INC);
+    rc_tm1637dp_stop();
+
+    // send the raw digits
+    rc_tm1637dp_start();
+    rc_tm1637dp_write_byte(TM_ADDRESS_START);
+    for (uint8_t i = 0; i < 4; i++) {
+        rc_tm1637dp_write_byte(digit_bitmasks[i]);
+    }
+    rc_tm1637dp_stop();
+
+    // ensure the next set chars wont be stale
+    display_clear_cache();
+}

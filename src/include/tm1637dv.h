@@ -31,12 +31,14 @@ typedef enum : uint8_t {
     CHAR_L = 24,
     CHAR_Y = 25,
     CHAR_N = 26,
-    CHAR_DEGREE = 27,
+    SCHAR_DEG = 27,
     CHAR_NULL = 0xFF,
 } digit_t;
 
 void display_set_enabled(bool on);
 void display_set_brightness(uint8_t brightness);
 void display_set_characters(const digit_t digits[4], bool colon);
+void display_clear_cache(void);
+void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]);
 
 #endif //TM1637DV_H

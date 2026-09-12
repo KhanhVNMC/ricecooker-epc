@@ -72,7 +72,8 @@ static void printsegchars(uint8_t digits[4]) {
         get_color(digits[2], RC_SEG_D),
         get_color(digits[3], RC_SEG_D)
     );
-    printf("%s", COLOR_RESET);
+    printf("%s\n\n", COLOR_RESET);
+    printf("Q=SELECT W=CANCEL E=OPTIONS R=INCR T=DECR\n");
 }
 
 static void tm_render(void) {

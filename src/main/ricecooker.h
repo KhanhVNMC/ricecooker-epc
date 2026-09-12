@@ -2,6 +2,8 @@
 #define RICECOOKER_RICECOOKER_H
 #include <stdint.h>
 
+#include "include/rchal.h"
+
 typedef enum : uint8_t {
     // universal states
     STATE_IDLE,
@@ -32,5 +34,10 @@ typedef enum {
 
     COUNT_COOKING_MODES
 } cooking_mode_t;
+
+typedef struct {
+    uint8_t digit;
+    bitmask8_t segment;
+} spinny_step_t; // yes, for the spinny icon...
 
 #endif //RICECOOKER_RICECOOKER_H
