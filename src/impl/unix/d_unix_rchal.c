@@ -21,6 +21,10 @@ void rc_init_hal(void) {
     printf("Q=SELECT W=CANCEL E=OPTIONS R=INCR T=DECR\n");
 }
 
+void rc_buzzer_play(void) {
+
+}
+
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
     if (sensor >= COUNT_RC_SENSORS) {
         return 0.0f;

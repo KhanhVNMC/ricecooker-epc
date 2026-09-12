@@ -58,6 +58,7 @@ static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[13] = { // holy jank
     {0, RC_SEG_F},
 };
 
+//// APPLICATION STATES / FLAGS /////
 // state machines shit
 static app_state_t app_state;
 static cooking_mode_t cooking_mode;
@@ -74,8 +75,10 @@ static bool config_time_edit_minutes;
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
 
-// frontdecl functions
-void reset_app_state(void);
+// masks & shit
+static bitmask8_t last_input_mask = 0;
+
+//// APPLICATION FINITE STATE MACHINE /////
 void begin_task_cooking(void);
 void begin_task_delayed_countdown(void);
 void on_cooking_pltick(void);
@@ -84,23 +87,32 @@ void on_delayed_countdown_end(void);
 void update_rc_display(void);
 void on_platform_tick(void);
 
-static void cf_change_config_time(uint16_t *time_mins_dest, const bitmask8_t pressed) {
-    const uint16_t to_change = (config_time_edit_minutes ? CONFIG_TIME_MINUTES_STEP : 60);
-    if (pressed & RC_BTN_INCR) {
-        if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
-            *time_mins_dest += to_change;
-        }
-        // todo: beep
-    } else if (pressed & RC_BTN_DECR) {
-        if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
-            *time_mins_dest -= to_change;
-        }
-        // todo: play beep?
-    }
-}
+// util functions
+static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
+static void app_display_countdown(uint32_t time_left_secs, bool blink);
 
-// masks & shit
-static bitmask8_t last_input_mask = 0;
+void reset_app_state() {
+    // FSM
+    app_state = STATE_IDLE;
+    cooking_mode = MODE_RICE_NORMAL;
+
+    // default values for delay and manual
+    manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
+    manual_mode_temp = DEFAULT_MANUAL_MODE_TEMP;
+    delayed_mode_time_mins = DEFAULT_DELAYED_MODE_TIME;
+    delayed_mode_active = false;
+    config_time_edit_minutes = true;
+
+    // just in case
+    timestamp_cook_start = 0;
+    timestamp_delayed_start = 0;
+
+    // default
+    display_set_characters(IDLE, false);
+
+    // heater
+    heater_set_enabled(false);
+}
 
 void app_on_btns_press(const bitmask8_t pressed) {
     if (pressed & RC_BTN_CANCEL) {
@@ -164,7 +176,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
                 config_time_edit_minutes = !config_time_edit_minutes;
                 break;
             }
-            cf_change_config_time(&delayed_mode_time_mins, pressed);
+            config_adjust_time(&delayed_mode_time_mins, pressed);
             break;
         }
         case STATE_CF_MANUAL_TIME: {
@@ -183,7 +195,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
                 config_time_edit_minutes = !config_time_edit_minutes;
                 break;
             }
-            cf_change_config_time(&manual_mode_time_mins, pressed);
+            config_adjust_time(&manual_mode_time_mins, pressed);
             break;
         }
         case STATE_CF_MANUAL_TEMP: {
@@ -196,12 +208,12 @@ void app_on_btns_press(const bitmask8_t pressed) {
                 if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
                     manual_mode_temp += CONFIG_TEMP_STEP;
                 }
-                // todo: beep
+                rc_buzzer_play();
             } else if (pressed & RC_BTN_DECR) {
                 if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
                     manual_mode_temp -= CONFIG_TEMP_STEP;
                 }
-                // todo: play beep?
+                rc_buzzer_play();
             }
             break;
         }
@@ -209,28 +221,6 @@ void app_on_btns_press(const bitmask8_t pressed) {
             break;
         }
         default: break; // prevent complaining
-    }
-}
-
-static inline void app_display_countdown(const uint32_t time_left_secs, const bool blink) {
-    const uint32_t time_left_mins = time_left_secs / 60;
-
-    const uint8_t display_hours = time_left_mins / 60;
-    const uint8_t display_mins = time_left_mins % 60;
-    const uint8_t display_seconds = time_left_secs % 60;
-
-    if (display_hours > 0) {
-        // HH:MM for >= 1 hour
-        display_set_characters((digit_t[4]) {
-            display_hours / 10, display_hours % 10,
-            display_mins / 10, display_mins % 10
-        }, blink);
-    } else {
-        // MM:SS for < 1 hour
-        display_set_characters((digit_t[4]) {
-            display_mins / 10, display_mins % 10,
-            display_seconds / 10, display_seconds % 10
-        }, blink);
     }
 }
 
@@ -339,7 +329,44 @@ void update_rc_display(void) {
     }
 }
 
-void task_main_app() {
+static void config_adjust_time(uint16_t *time_mins_dest, const bitmask8_t pressed) {
+    const uint16_t to_change = (config_time_edit_minutes ? CONFIG_TIME_MINUTES_STEP : 60);
+    if (pressed & RC_BTN_INCR) {
+        if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
+            *time_mins_dest += to_change;
+        }
+        // todo: beep
+    } else if (pressed & RC_BTN_DECR) {
+        if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
+            *time_mins_dest -= to_change;
+        }
+        // todo: play beep?
+    }
+}
+
+static inline void app_display_countdown(const uint32_t time_left_secs, const bool blink) {
+    const uint32_t time_left_mins = time_left_secs / 60;
+
+    const uint8_t display_hours = time_left_mins / 60;
+    const uint8_t display_mins = time_left_mins % 60;
+    const uint8_t display_seconds = time_left_secs % 60;
+
+    if (display_hours > 0) {
+        // HH:MM for >= 1 hour
+        display_set_characters((digit_t[4]) {
+            display_hours / 10, display_hours % 10,
+            display_mins / 10, display_mins % 10
+        }, blink);
+    } else {
+        // MM:SS for < 1 hour
+        display_set_characters((digit_t[4]) {
+            display_mins / 10, display_mins % 10,
+            display_seconds / 10, display_seconds % 10
+        }, blink);
+    }
+}
+
+void task_main_app_thread(void *args) {
     while (1) {
         // input
         const bitmask8_t current_mask = rc_buttons_get_state();
@@ -355,29 +382,6 @@ void task_main_app() {
         on_platform_tick();
         xthreads_sleep(10);
     }
-}
-
-void reset_app_state() {
-    // FSM
-    app_state = STATE_IDLE;
-    cooking_mode = MODE_RICE_NORMAL;
-
-    // default values for delay and manual
-    manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
-    manual_mode_temp = DEFAULT_MANUAL_MODE_TEMP;
-    delayed_mode_time_mins = DEFAULT_DELAYED_MODE_TIME;
-    delayed_mode_active = false;
-    config_time_edit_minutes = true;
-
-    // just in case
-    timestamp_cook_start = 0;
-    timestamp_delayed_start = 0;
-
-    // default
-    display_set_characters(IDLE, false);
-
-    // heater
-    rc_heater_set(false);
 }
 
 ///// BUSINESS LOGIC LAYER /////
@@ -426,17 +430,20 @@ void on_cooking_complete(void) {
 ///// PLATFORM CONTROL SHIT /////
 // threads
 static xthread_handle_t HEATER_UPDATE_THREAD;
+static xthread_handle_t MAIN_APP_THREAD;
 
-void init_threads() {
-    HEATER_UPDATE_THREAD = xthreads_new(task_heater_update, NULL);
+void create_app_threads() {
+    HEATER_UPDATE_THREAD = xthreads_new(task_heater_update_thread, NULL);
+    MAIN_APP_THREAD = xthreads_new(task_main_app_thread, NULL);
 }
 
 void platform_main(void) {
-    rc_init_hal();
-    init_threads();
+    rc_init_hal(); // init HAL and RCHAL
+    platform_init_primitives(); // init GPIO and shit
 
-    display_set_enabled(true);
+    display_set_enabled(true); // turn the screen on
+    reset_app_state(); // initial boot
 
-    reset_app_state();
-    task_main_app();
+    create_app_threads(); // create RTOS threads
+    platform_start_xthreads_sched(); // init scheduler
 }

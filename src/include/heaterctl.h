@@ -8,6 +8,6 @@ void heater_set_enabled(bool enabled);
 float heater_get_target_temp(void);
 bool heater_is_enabled(void);
 
-void task_heater_update(void *args);
+void task_heater_update_thread(void *args);
 
 #endif //RICECOOKER_HEATERCTL_H

@@ -22,7 +22,7 @@ void heater_set_enabled(const bool enabled) {
     xthreads_csexit();
 }
 
-void task_heater_update(void *args) {
+void task_heater_update_thread(void *args) {
     while (1) {
         xthreads_csenter(); // critical section
         const bool local_heater_enabled = heater_element_enabled;

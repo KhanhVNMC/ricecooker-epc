@@ -18,6 +18,8 @@ add_executable(ricecooker
         src/impl/unix/fake_tm1637.c
         src/main/ricecooker.h
         src/impl/unix/fake_btns.c
+        src/main/tempstats.c
+        src/main/tempstats.h
 )
 
 target_include_directories(ricecooker PRIVATE
