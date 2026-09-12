@@ -8,6 +8,16 @@
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 
+#define CONFIG_TIME_MINUTES_STEP    1
+#define CONFIG_TEMP_STEP            5
+#define DEFAULT_MANUAL_MODE_TIME    30
+#define DEFAULT_MANUAL_MODE_TEMP    80
+#define DEFAULT_DELAYED_MODE_TIME   15
+#define MIN_CONFIG_TIME_MINS        1
+#define MAX_CONFIG_TIME_MINS        (99u * 60 + 59u)
+#define MIN_CONFIG_TEMP             60
+#define MAX_CONFIG_TEMP             105
+
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
 static constexpr digit_t IDLE[4] = {CHAR_I, CHAR_D, CHAR_L, CHAR_E};
@@ -52,18 +62,42 @@ static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[13] = { // holy jank
 static app_state_t app_state;
 static cooking_mode_t cooking_mode;
 
-static float    manual_mode_temp;
+static uint8_t  manual_mode_temp;
 static uint16_t manual_mode_time_mins;
 
+static bool     delayed_mode_active;
 static uint16_t delayed_mode_time_mins;
 
+static bool config_time_edit_minutes;
+
 // timestamps
-static uint32_t cook_start_time;
-static uint16_t delayed_mode_start_time;
+static uint32_t timestamp_cook_start;
+static uint32_t timestamp_delayed_start;
 
 // frontdecl functions
 void reset_app_state(void);
+void begin_task_cooking(void);
+void begin_task_delayed_countdown(void);
+void on_cooking_pltick(void);
+void on_cooking_complete(void);
+void on_delayed_countdown_end(void);
 void update_rc_display(void);
+void on_platform_tick(void);
+
+static void cf_change_config_time(uint16_t *time_mins_dest, const bitmask8_t pressed) {
+    const uint16_t to_change = (config_time_edit_minutes ? CONFIG_TIME_MINUTES_STEP : 60);
+    if (pressed & RC_BTN_INCR) {
+        if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
+            *time_mins_dest += to_change;
+        }
+        // todo: beep
+    } else if (pressed & RC_BTN_DECR) {
+        if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
+            *time_mins_dest -= to_change;
+        }
+        // todo: play beep?
+    }
+}
 
 // masks & shit
 static bitmask8_t last_input_mask = 0;
@@ -77,61 +111,109 @@ void app_on_btns_press(const bitmask8_t pressed) {
         case STATE_IDLE: {
             // pressing OPTIONS here take to mode select menu
             if (pressed & RC_BTN_OPTIONS) {
-                // TODO MAKE THIS SHIT WORK PROPERLY
                 app_state = STATE_MODE_SELECT;
                 cooking_mode = MODE_RICE_NORMAL;
-                break;
             }
             break;
         }
+        case STATE_CF_DELAYED_MODE_SELECT:
         case STATE_MODE_SELECT: {
+            // press SELECT here either:
             if (pressed & RC_BTN_SELECT) {
-                app_state = STATE_COOKING;
-                cook_start_time = rc_time_current_millis();
-                manual_mode_time_mins = 60 + 1;
+                // if selected "DELAY", take to select delayed time
+                if (cooking_mode == MODE_DELAYED_EXEC) {
+                    app_state = STATE_CF_DELAYED_TIME;
+                    cooking_mode = MODE_RICE_NORMAL; // ensure valid mode
+                    config_time_edit_minutes = true;
+                    break;
+                }
+                // if selected "MANUAL", take to set temp
+                if (cooking_mode == MODE_MANUAL_USER) {
+                    app_state = STATE_CF_MANUAL_TEMP;
+                    break;
+                }
+                // if "DELAY" configured complete -> exec delay code
+                if (delayed_mode_active) {
+                    begin_task_delayed_countdown();
+                    break;
+                }
+                // else exec normal cooking proc
+                begin_task_cooking();
                 break;
             }
+            // in delayed mode, you cannot select delayed again
+            const uint8_t mode_count = delayed_mode_active ? MODE_DELAYED_EXEC : COUNT_COOKING_MODES;
             // wraparounds for less clunky navigation
             if (pressed & RC_BTN_INCR) {
-                cooking_mode = (cooking_mode + 1) % COUNT_COOKING_MODES;
+                cooking_mode = (cooking_mode + 1) % mode_count;
             } else if (pressed & RC_BTN_DECR) {
-                cooking_mode = ((cooking_mode - 1) + COUNT_COOKING_MODES) % COUNT_COOKING_MODES;
+                cooking_mode = ((cooking_mode - 1) + mode_count) % mode_count;
+            }
+            break;
+        }
+        case STATE_CF_DELAYED_TIME: {
+            if (pressed & RC_BTN_SELECT) {
+                // delayed mode configured complete
+                delayed_mode_active = true;
+                cooking_mode = MODE_RICE_NORMAL; // default mode
+                app_state = STATE_CF_DELAYED_MODE_SELECT;
+                break;
+            }
+            if (pressed & RC_BTN_OPTIONS) {
+                // swap between editing min/hour
+                config_time_edit_minutes = !config_time_edit_minutes;
+                break;
+            }
+            cf_change_config_time(&delayed_mode_time_mins, pressed);
+            break;
+        }
+        case STATE_CF_MANUAL_TIME: {
+            if (pressed & RC_BTN_SELECT) {
+                // if "DELAY" configured before -> exec delay code
+                if (delayed_mode_active) {
+                    begin_task_delayed_countdown();
+                    break;
+                }
+                // else exec normal cooking proc
+                begin_task_cooking();
+                break;
+            }
+            if (pressed & RC_BTN_OPTIONS) {
+                // swap between editing min/hour
+                config_time_edit_minutes = !config_time_edit_minutes;
+                break;
+            }
+            cf_change_config_time(&manual_mode_time_mins, pressed);
+            break;
+        }
+        case STATE_CF_MANUAL_TEMP: {
+            if (pressed & RC_BTN_SELECT) {
+                // after selecting temp, select time 4 manual
+                app_state = STATE_CF_MANUAL_TIME;
+                break;
+            }
+            if (pressed & RC_BTN_INCR) {
+                if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
+                    manual_mode_temp += CONFIG_TEMP_STEP;
+                }
+                // todo: beep
+            } else if (pressed & RC_BTN_DECR) {
+                if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
+                    manual_mode_temp -= CONFIG_TEMP_STEP;
+                }
+                // todo: play beep?
             }
             break;
         }
         case STATE_COOKING: {
             break;
         }
-        case STATE_HOLD_WARM: {
-            break;
-        }
-        case STATE_DELAYED_COUNTDOWN: {
-            break;
-        }
-        case STATE_CF_MANUAL_TEMP: {
-            break;
-        }
-        case STATE_CF_MANUAL_TIME: {
-            break;
-        }
-        case STATE_CF_DELAYED_TIME: {
-            break;
-        }
-        case STATE_CF_DELAYED_MODE_SELECT: {
-            break;
-        }
         default: break; // prevent complaining
     }
 }
 
-void reset_app_state() {
-    app_state = STATE_IDLE;
-    cooking_mode = MODE_RICE_NORMAL;
-    display_set_characters(IDLE, false);
-}
-
-static inline void app_display_countdown(const uint16_t time_left_secs, const bool blink) {
-    const uint8_t time_left_mins = time_left_secs / 60;
+static inline void app_display_countdown(const uint32_t time_left_secs, const bool blink) {
+    const uint32_t time_left_mins = time_left_secs / 60;
 
     const uint8_t display_hours = time_left_mins / 60;
     const uint8_t display_mins = time_left_mins % 60;
@@ -162,18 +244,18 @@ void update_rc_display(void) {
         case STATE_MODE_SELECT: {
             display_set_characters(
                 (rc_time_current_millis() / 500u) & 1u // blink every 500ms
-                ? mode_to_digits[cooking_mode]
-                : BLANK, false
+                ? mode_to_digits[cooking_mode]: BLANK,
+                (app_state == STATE_CF_DELAYED_MODE_SELECT) // : if delayed
             );
             break;
         }
         case STATE_COOKING: {
             const uint32_t current_time = rc_time_current_millis();
             // SHOW TIME LEFT: for manual mode every 5s (from cooking start)
-            if (cooking_mode == MODE_MANUAL_USER && ((current_time - cook_start_time) / 5000u) & 1u) {
+            if (cooking_mode == MODE_MANUAL_USER && ((current_time - timestamp_cook_start) / 5000u) & 1u) {
                 const uint32_t duration_ms = manual_mode_time_mins * 60000u;
                 app_display_countdown(
-                    ((cook_start_time + duration_ms) - current_time) / 1000u,
+                    ((timestamp_cook_start + duration_ms) - current_time) / 1000u,
                     (current_time / 500u) & 1u
                 );
                 break;
@@ -197,10 +279,10 @@ void update_rc_display(void) {
         case STATE_DELAYED_COUNTDOWN: {
             const uint32_t current_time = rc_time_current_millis();
             // SHOW TIME LEFT: for delayed mode every 5s (from delay start)
-            if (((current_time - delayed_mode_start_time) / 5000u) & 1u) {
+            if (((current_time - timestamp_delayed_start) / 5000u) & 1u) {
                 const uint32_t duration_ms = delayed_mode_time_mins * 60000u;
                 app_display_countdown(
-                    ((delayed_mode_start_time + duration_ms) - current_time) / 1000u,
+                    ((timestamp_delayed_start + duration_ms) - current_time) / 1000u,
                     (current_time / 500u) & 1u
                 );
                 break;
@@ -209,17 +291,48 @@ void update_rc_display(void) {
             display_set_characters(mode_to_digits[MODE_DELAYED_EXEC], false);
             break;
         }
+        case STATE_CF_MANUAL_TEMP: {
+            if (manual_mode_temp <= 99) {
+                // for temp <= 99: [99oC]
+                display_set_characters((digit_t[4]) {
+                    manual_mode_temp / 10, manual_mode_temp % 10,
+                    SCHAR_DEG, CHAR_C
+                } ,false);
+            } else {
+                // for temp > 99: [100o]
+                display_set_characters((digit_t[4]) {
+                    manual_mode_temp / 100,
+                    (manual_mode_temp / 10) % 10,
+                    manual_mode_temp % 10,
+                    SCHAR_DEG
+                } ,false);
+            }
+            break;
+        }
+        case STATE_CF_MANUAL_TIME:
+        case STATE_CF_DELAYED_TIME: {
+            const bool blink = (rc_time_current_millis() / 500u) & 1u;
+            const uint32_t time_source_mins = app_state == STATE_CF_MANUAL_TIME
+                ? manual_mode_time_mins : delayed_mode_time_mins
+            ;
+            const uint8_t display_hours = time_source_mins / 60;
+            const uint8_t display_mins = time_source_mins % 60;
+            // blink the editing one
+            if (config_time_edit_minutes) {
+                display_set_characters((digit_t[4]) {
+                    display_hours / 10, display_hours % 10,
+                    blink ? (display_mins / 10) : CHAR_NULL, blink ? (display_mins % 10) : CHAR_NULL
+                }, true);
+            } else {
+                display_set_characters((digit_t[4]) {
+                    blink ? (display_hours / 10) : CHAR_NULL, blink ? (display_hours % 10) : CHAR_NULL,
+                    display_mins / 10, display_mins % 10,
+                }, true);
+            }
+            break;
+        }
         case STATE_HOLD_WARM: {
             display_set_characters(mode_to_digits[MODE_HOLD_WARM], false);
-            break;
-        }
-        case STATE_CF_MANUAL_TEMP: {
-            break;
-        }
-        case STATE_CF_MANUAL_TIME: {
-            break;
-        }
-        case STATE_CF_DELAYED_TIME: {
             break;
         }
         default: break; // prevent complaining
@@ -239,12 +352,78 @@ void task_main_app() {
             }
             last_input_mask = current_mask;
         }
-        // output
-        update_rc_display();
+        on_platform_tick();
         xthreads_sleep(10);
     }
 }
 
+void reset_app_state() {
+    // FSM
+    app_state = STATE_IDLE;
+    cooking_mode = MODE_RICE_NORMAL;
+
+    // default values for delay and manual
+    manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
+    manual_mode_temp = DEFAULT_MANUAL_MODE_TEMP;
+    delayed_mode_time_mins = DEFAULT_DELAYED_MODE_TIME;
+    delayed_mode_active = false;
+    config_time_edit_minutes = true;
+
+    // just in case
+    timestamp_cook_start = 0;
+    timestamp_delayed_start = 0;
+
+    // default
+    display_set_characters(IDLE, false);
+
+    // heater
+    rc_heater_set(false);
+}
+
+///// BUSINESS LOGIC LAYER /////
+void begin_task_delayed_countdown(void) {
+    timestamp_delayed_start = rc_time_current_millis();
+    app_state = STATE_DELAYED_COUNTDOWN;
+}
+
+void on_delayed_countdown_end(void) {
+    begin_task_cooking();
+}
+
+void on_platform_tick(void) {
+    const uint32_t current_time = rc_time_current_millis();
+    // trigger the job at the end of the delay tunnel
+    if (app_state == STATE_DELAYED_COUNTDOWN) {
+        const uint32_t dl_duration_ms = delayed_mode_time_mins * 60000u;
+        if (current_time - timestamp_delayed_start >= dl_duration_ms) {
+            delayed_mode_active = false;
+            on_delayed_countdown_end();
+        }
+    }
+    if (app_state == STATE_COOKING || app_state == STATE_HOLD_WARM) {
+        on_cooking_pltick();
+    }
+    // update output
+    update_rc_display();
+}
+
+// TODO MAKE THIS WORK PROPERLY
+void begin_task_cooking(void) {
+    timestamp_cook_start = rc_time_current_millis();
+    app_state = STATE_COOKING;
+}
+
+// TODO MAKE THIS WORK PROPERLY
+void on_cooking_pltick(void) {
+
+}
+
+// TODO MAKE THIS WORK PROPERLY
+void on_cooking_complete(void) {
+
+}
+
+///// PLATFORM CONTROL SHIT /////
 // threads
 static xthread_handle_t HEATER_UPDATE_THREAD;
 
