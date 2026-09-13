@@ -2,6 +2,9 @@
 #define XTHREADS_H
 #include <stdint.h>
 
+#define critical for (bool _once = (xthreads_csenter(), true); _once; xthreads_csexit(), _once = false)
+#define critical_ret(x) xthreads_csenter(); auto _ret = x; xthreads_csexit(); return _ret
+
 typedef void (*xthread_func_t)(void *args);
 typedef void *xthread_handle_t;
 

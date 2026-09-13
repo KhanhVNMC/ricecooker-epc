@@ -8,15 +8,15 @@
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 
-#define CONFIG_TIME_MINUTES_STEP    1
-#define CONFIG_TEMP_STEP            5
-#define DEFAULT_MANUAL_MODE_TIME    30
-#define DEFAULT_MANUAL_MODE_TEMP    80
-#define DEFAULT_DELAYED_MODE_TIME   15
-#define MIN_CONFIG_TIME_MINS        1
+#define CONFIG_TIME_MINUTES_STEP    (1)
+#define CONFIG_TEMP_STEP            (5)
+#define DEFAULT_MANUAL_MODE_TIME    (30)
+#define DEFAULT_MANUAL_MODE_TEMP    (80)
+#define DEFAULT_DELAYED_MODE_TIME   (15)
+#define MIN_CONFIG_TIME_MINS        (1)
 #define MAX_CONFIG_TIME_MINS        (99u * 60 + 59u)
-#define MIN_CONFIG_TEMP             60
-#define MAX_CONFIG_TEMP             105
+#define MIN_CONFIG_TEMP             (60)
+#define MAX_CONFIG_TEMP             (105)
 
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
@@ -60,7 +60,7 @@ static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[13] = { // holy jank
 
 //// APPLICATION STATES / FLAGS /////
 // state machines shit
-static app_state_t app_state;
+static app_state_t    app_state;
 static cooking_mode_t cooking_mode;
 
 static uint8_t  manual_mode_temp;
@@ -81,7 +81,7 @@ static bitmask8_t last_input_mask = 0;
 //// APPLICATION FINITE STATE MACHINE /////
 void begin_task_cooking(void);
 void begin_task_delayed_countdown(void);
-void on_cooking_pltick(void);
+void on_cooking_pltick(uint32_t current_time);
 void on_cooking_complete(void);
 void on_delayed_countdown_end(void);
 void update_rc_display(void);
@@ -186,7 +186,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
                     begin_task_delayed_countdown();
                     break;
                 }
-                // else exec normal cooking proc
+                // else exec normal cooking proc with flag set
                 begin_task_cooking();
                 break;
             }
@@ -404,8 +404,9 @@ void on_platform_tick(void) {
             on_delayed_countdown_end();
         }
     }
+    // platform tick while cooking
     if (app_state == STATE_COOKING || app_state == STATE_HOLD_WARM) {
-        on_cooking_pltick();
+        on_cooking_pltick(current_time);
     }
     // update output
     update_rc_display();
@@ -418,7 +419,7 @@ void begin_task_cooking(void) {
 }
 
 // TODO MAKE THIS WORK PROPERLY
-void on_cooking_pltick(void) {
+void on_cooking_pltick(const uint32_t current_time) {
 
 }
 
