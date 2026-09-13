@@ -12,7 +12,7 @@
 #define THERMISTOR_HEADROOM             (4.f)
 #define HEATERCTL_INTERVAL              (50) // ms
 
-static bitmask8_t heater_ctl_faults = 0;
+static heater_faults_t heater_ctl_faults = 0;
 
 static float heater_pot_temp_target = 0;
 static bool heater_element_enabled = false;
@@ -20,11 +20,6 @@ static bool heater_element_enabled = false;
 static uint32_t heater_on_timestamp = 0;
 static float heater_on_elem_tmp = 0;
 static float heater_on_pot_tmp = 0;
-
-enum : uint8_t {
-    HEATER_OVERHEAT_FAULT = 1 << 0,
-    HEATER_UNDERHEAT_FAULT = 1 << 1,
-};
 
 void heater_set_target_pot_temp(const float temp) {
     critical heater_pot_temp_target = fclampf(temp, THERMISTOR_MIN_TEMP, THERMISTOR_MAX_TEMP);
@@ -42,7 +37,7 @@ bool heater_is_enabled(void) {
     critical_ret (heater_element_enabled);
 }
 
-bitmask8_t heater_get_faults(void) {
+heater_faults_t heater_get_faults(void) {
     critical_ret (heater_ctl_faults);
 }
 
@@ -60,6 +55,7 @@ void task_heater_update_thread(void *args) {
 
         if (!local_heater_enabled || local_heater_ctl_faults != 0u) {
             rc_heater_set(false);
+            critical heater_element_enabled = false;
             xthreads_sleep(HEATERCTL_INTERVAL);
             continue;
         }

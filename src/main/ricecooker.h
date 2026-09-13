@@ -7,6 +7,7 @@
 typedef enum : uint8_t {
     // universal states
     STATE_IDLE,
+    STATE_SYSTEM_ERROR,
     STATE_MODE_SELECT,
     // executing tasks states
     STATE_COOKING,

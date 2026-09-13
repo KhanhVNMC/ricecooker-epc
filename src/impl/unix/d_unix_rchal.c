@@ -30,27 +30,21 @@ float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
         return 0.0f;
     }
     // what the fuck is this man
-    if (heater_state) {
-        sensor_values[RC_SENSOR_HEATER]++;
-        sensor_values[RC_SENSOR_POT] += 0.9f;
-    } else {
-        if (sensor_values[RC_SENSOR_HEATER] >= 25) {
-            sensor_values[RC_SENSOR_HEATER] -= 1.0f;
-        }
-        if (sensor_values[RC_SENSOR_POT] >= 25) {
-            sensor_values[RC_SENSOR_POT] -= 0.5f;
-        }
-    }
+    // if (heater_state) {
+    //     sensor_values[RC_SENSOR_HEATER] += 1;
+    //     sensor_values[RC_SENSOR_POT] += 0.9f;
+    // } else {
+    //     if (sensor_values[RC_SENSOR_HEATER] >= 25) {
+    //         sensor_values[RC_SENSOR_HEATER] -= 1.0f;
+    //     }
+    //     if (sensor_values[RC_SENSOR_POT] >= 25) {
+    //         sensor_values[RC_SENSOR_POT] -= 0.5f;
+    //     }
+    // }
     return sensor_values[sensor];
 }
 
 void rc_heater_set(const bool on) {
-    if (heater_state != on) printf(
-        "HEATER %s (HEATER=%f;POT=%f)\n",
-        on ? "ON" : "OFF",
-        sensor_values[RC_SENSOR_HEATER],
-        sensor_values[RC_SENSOR_POT]
-    );
     heater_state = on;
 }
 

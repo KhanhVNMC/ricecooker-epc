@@ -1,10 +1,10 @@
 #include <stdlib.h>
 
 #include "ricecooker.h"
+#include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
 #include "include/platform.h"
-#include "include/mem.h"
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 
@@ -21,7 +21,6 @@
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
 static constexpr digit_t IDLE[4] = {CHAR_I, CHAR_D, CHAR_L, CHAR_E};
-static constexpr digit_t ERRO[4] = {CHAR_E, CHAR_R, CHAR_R, CHAR_O};
 
 static constexpr digit_t mode_to_digits[][4] = {
     [MODE_RICE_NORMAL] = {CHAR_R, CHAR_I, CHAR_C, CHAR_E},
@@ -71,9 +70,13 @@ static uint16_t delayed_mode_time_mins;
 
 static bool config_time_edit_minutes;
 
+// error detection policy & shit
+static uint8_t system_error_code;
+
 // timestamps
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
+static uint32_t timestamp_pot_temp_display_start; // cosmetic
 
 // masks & shit
 static bitmask8_t last_input_mask = 0;
@@ -90,11 +93,18 @@ void on_platform_tick(void);
 // util functions
 static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
 static void app_display_countdown(uint32_t time_left_secs, bool blink);
+static void app_display_temperature(uint16_t temp);
 
-void reset_app_state() {
-    // FSM
-    app_state = STATE_IDLE;
+void reset_app_state(const app_state_t reset_to) {
+    // heater
+    heater_set_enabled(false);
+
+    // FSM reset
+    app_state = reset_to;
     cooking_mode = MODE_RICE_NORMAL;
+    if (reset_to == STATE_IDLE) {
+        system_error_code = 0; // no "errors"
+    }
 
     // default values for delay and manual
     manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
@@ -106,17 +116,11 @@ void reset_app_state() {
     // just in case
     timestamp_cook_start = 0;
     timestamp_delayed_start = 0;
-
-    // default
-    display_set_characters(IDLE, false);
-
-    // heater
-    heater_set_enabled(false);
 }
 
 void app_on_btns_press(const bitmask8_t pressed) {
     if (pressed & RC_BTN_CANCEL) {
-        reset_app_state();
+        reset_app_state(STATE_IDLE); // ignore errors for now
         return;
     }
     switch (app_state) {
@@ -218,6 +222,10 @@ void app_on_btns_press(const bitmask8_t pressed) {
             break;
         }
         case STATE_COOKING: {
+            if (pressed & RC_BTN_OPTIONS) {
+                // this should display the temp screen for 3s
+                timestamp_pot_temp_display_start = rc_time_current_millis();
+            }
             break;
         }
         default: break; // prevent complaining
@@ -228,6 +236,15 @@ void update_rc_display(void) {
     switch (app_state) {
         case STATE_IDLE: {
             display_set_characters(IDLE, false);
+            break;
+        }
+        case STATE_SYSTEM_ERROR: {
+            const bool blink = (rc_time_current_millis() / 500u) & 1u;
+            // display blinking [ERR:<code>]
+            display_set_characters(blink ?
+                (digit_t[4]) {CHAR_E, CHAR_R, system_error_code / 10, system_error_code % 10}
+                : BLANK, blink
+            );
             break;
         }
         case STATE_CF_DELAYED_MODE_SELECT:
@@ -241,6 +258,14 @@ void update_rc_display(void) {
         }
         case STATE_COOKING: {
             const uint32_t current_time = rc_time_current_millis();
+            // SHOW POT TEMPERATURE: if the user pressed OPTIONS during cooking
+            if (current_time - timestamp_pot_temp_display_start < 3000u) {
+                app_display_temperature(
+                    dcf32u16(rc_sensor_get_temp(RC_SENSOR_POT) + 0.5f, 250)
+                );
+                break;
+            }
+
             // SHOW TIME LEFT: for manual mode every 5s (from cooking start)
             if (cooking_mode == MODE_MANUAL_USER && ((current_time - timestamp_cook_start) / 5000u) & 1u) {
                 const uint32_t duration_ms = manual_mode_time_mins * 60000u;
@@ -282,21 +307,7 @@ void update_rc_display(void) {
             break;
         }
         case STATE_CF_MANUAL_TEMP: {
-            if (manual_mode_temp <= 99) {
-                // for temp <= 99: [99oC]
-                display_set_characters((digit_t[4]) {
-                    manual_mode_temp / 10, manual_mode_temp % 10,
-                    SCHAR_DEG, CHAR_C
-                } ,false);
-            } else {
-                // for temp > 99: [100o]
-                display_set_characters((digit_t[4]) {
-                    manual_mode_temp / 100,
-                    (manual_mode_temp / 10) % 10,
-                    manual_mode_temp % 10,
-                    SCHAR_DEG
-                } ,false);
-            }
+            app_display_temperature(manual_mode_temp);
             break;
         }
         case STATE_CF_MANUAL_TIME:
@@ -335,12 +346,12 @@ static void config_adjust_time(uint16_t *time_mins_dest, const bitmask8_t presse
         if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
             *time_mins_dest += to_change;
         }
-        // todo: beep
+        rc_buzzer_play();
     } else if (pressed & RC_BTN_DECR) {
         if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
             *time_mins_dest -= to_change;
         }
-        // todo: play beep?
+        rc_buzzer_play();
     }
 }
 
@@ -363,6 +374,24 @@ static inline void app_display_countdown(const uint32_t time_left_secs, const bo
             display_mins / 10, display_mins % 10,
             display_seconds / 10, display_seconds % 10
         }, blink);
+    }
+}
+
+static inline void app_display_temperature(const uint16_t temp) {
+    if (temp <= 99u) {
+        display_set_characters((digit_t[4]) {
+            temp / 10u,
+            temp % 10u,
+            SCHAR_DEG,
+            CHAR_C
+        }, false);
+    } else {
+        display_set_characters((digit_t[4]) {
+            temp / 100u,
+            (temp / 10u) % 10u,
+            temp % 10u,
+            SCHAR_DEG
+        }, false);
     }
 }
 
@@ -416,11 +445,24 @@ void on_platform_tick(void) {
 void begin_task_cooking(void) {
     timestamp_cook_start = rc_time_current_millis();
     app_state = STATE_COOKING;
+    // TODO THIS IS JUST TEST CODE
+    heater_set_target_pot_temp(100.f);
+    heater_set_enabled(true);
 }
 
 // TODO MAKE THIS WORK PROPERLY
 void on_cooking_pltick(const uint32_t current_time) {
+    // watchdog for heater faults (error code 1x)
+    const heater_faults_t hfaults = heater_get_faults();
+    if (hfaults != 0) {
+        system_error_code = 10; // base error code
+        if (hfaults & HEATER_OVERHEAT_FAULT) system_error_code += 5;
+        if (hfaults & HEATER_UNDERHEAT_FAULT) system_error_code += 4;
+        reset_app_state(STATE_SYSTEM_ERROR);
+        return;
+    }
 
+    // TODO impl here
 }
 
 // TODO MAKE THIS WORK PROPERLY
@@ -443,7 +485,7 @@ void platform_main(void) {
     platform_init_primitives(); // init GPIO and shit
 
     display_set_enabled(true); // turn the screen on
-    reset_app_state(); // initial boot
+    reset_app_state(STATE_IDLE); // initial boot
 
     create_app_threads(); // create RTOS threads
     platform_start_xthreads_sched(); // init scheduler

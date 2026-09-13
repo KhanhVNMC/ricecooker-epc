@@ -2,6 +2,12 @@
 #define RICECOOKER_CMATH_H
 #include <stdint.h>
 
+static inline uint16_t dcf32u16(const float value, const uint16_t max) {
+    if (!(value > 0.0f)) return 0u;
+    if (value >= (float)max) return max;
+    return (uint16_t) value;
+}
+
 static inline uint8_t u8_min(const uint8_t a, const uint8_t b) {
     return a < b ? a : b;
 }
