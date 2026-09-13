@@ -1,10 +1,7 @@
 #include <stdlib.h>
 
-#include "ricecooker.h"
-
-#include <stdio.h>
-
 #include "tempstats.h"
+#include "ricecooker.h"
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
@@ -111,6 +108,7 @@ void reset_app_state(const app_state_t reset_to) {
     cooking_mode = MODE_RICE_NORMAL;
     if (reset_to == STATE_IDLE) {
         system_error_code = 0; // no "errors"
+        heater_clear_faults();
     }
 
     // default values for delay and manual + more
@@ -177,20 +175,23 @@ void app_on_btns_press(const bitmask8_t pressed) {
             }
             break;
         }
-        case STATE_CF_DELAYED_TIME: {
+        case STATE_CF_MANUAL_TEMP: {
             if (pressed & RC_BTN_SELECT) {
-                // delayed mode configured complete
-                delayed_mode_active = true;
-                cooking_mode = MODE_RICE_NORMAL; // default mode
-                app_state = STATE_CF_DELAYED_MODE_SELECT;
+                // after selecting temp, select time 4 manual
+                app_state = STATE_CF_MANUAL_TIME;
                 break;
             }
-            if (pressed & RC_BTN_OPTIONS) {
-                // swap between editing min/hour
-                config_time_edit_minutes = !config_time_edit_minutes;
-                break;
+            if (pressed & RC_BTN_INCR) {
+                if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
+                    manual_mode_temp += CONFIG_TEMP_STEP;
+                }
+                rc_buzzer_play();
+            } else if (pressed & RC_BTN_DECR) {
+                if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
+                    manual_mode_temp -= CONFIG_TEMP_STEP;
+                }
+                rc_buzzer_play();
             }
-            config_adjust_time(&delayed_mode_time_mins, pressed);
             break;
         }
         case STATE_CF_MANUAL_TIME: {
@@ -212,23 +213,20 @@ void app_on_btns_press(const bitmask8_t pressed) {
             config_adjust_time(&manual_mode_time_mins, pressed);
             break;
         }
-        case STATE_CF_MANUAL_TEMP: {
+        case STATE_CF_DELAYED_TIME: {
             if (pressed & RC_BTN_SELECT) {
-                // after selecting temp, select time 4 manual
-                app_state = STATE_CF_MANUAL_TIME;
+                // delayed mode configured complete
+                delayed_mode_active = true;
+                cooking_mode = MODE_RICE_NORMAL; // default mode
+                app_state = STATE_CF_DELAYED_MODE_SELECT;
                 break;
             }
-            if (pressed & RC_BTN_INCR) {
-                if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
-                    manual_mode_temp += CONFIG_TEMP_STEP;
-                }
-                rc_buzzer_play();
-            } else if (pressed & RC_BTN_DECR) {
-                if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
-                    manual_mode_temp -= CONFIG_TEMP_STEP;
-                }
-                rc_buzzer_play();
+            if (pressed & RC_BTN_OPTIONS) {
+                // swap between editing min/hour
+                config_time_edit_minutes = !config_time_edit_minutes;
+                break;
             }
+            config_adjust_time(&delayed_mode_time_mins, pressed);
             break;
         }
         case STATE_COOKING: {
@@ -441,7 +439,7 @@ void watchdog_platform_tick(const uint32_t current_time) {
     }
     // collect pot temp every second
     if (current_time - timestamp_tempstats_last_sample >= 1000u) {
-        tempstats_collect(rc_sensor_get_temp(RC_SENSOR_HEATER));
+        tempstats_collect_sample(rc_sensor_get_temp(RC_SENSOR_HEATER));
         timestamp_tempstats_last_sample = current_time;
     }
 }

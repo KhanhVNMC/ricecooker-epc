@@ -7,7 +7,7 @@
 void tempstats_reset(void);
 bool tempstats_is_full(void);
 
-void tempstats_collect(float temp);
+void tempstats_collect_sample(float temp);
 float tempstats_get_at(uint8_t i);
 
 float tempstats_get_avg(void);

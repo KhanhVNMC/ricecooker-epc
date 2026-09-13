@@ -14,7 +14,7 @@ bool tempstats_is_full(void) {
     return rb_fill_size == SAMPLES_RETENTION_SIZE;
 }
 
-void tempstats_collect(const float temp) {
+void tempstats_collect_sample(const float temp) {
     tmp_ringbuf[rb_head] = temp;
     rb_head = (rb_head + 1) % SAMPLES_RETENTION_SIZE;
 
@@ -45,7 +45,7 @@ float tempstats_get_avg(void) {
 float tempstats_linreg_slope(void) {
     const uint8_t n = rb_fill_size;
     if (n < 2u) {
-        return 0.0f; // this doesnt work
+        return 0.0f; // doesnt work with like 1 sample (ofc)
     }
     const float avg_y = tempstats_get_avg();
     float avg_t = 0.f;
