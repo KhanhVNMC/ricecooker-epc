@@ -1,12 +1,18 @@
 #include <stdlib.h>
 
 #include "ricecooker.h"
+
+#include <stdio.h>
+
+#include "tempstats.h"
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
 #include "include/platform.h"
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
+
+#define APP_MAIN_INTERVAL           (10)
 
 #define CONFIG_TIME_MINUTES_STEP    (1)
 #define CONFIG_TEMP_STEP            (5)
@@ -38,7 +44,7 @@ static constexpr bitmask8_t SPINNY_LEFT = RC_SEG_A | RC_SEG_F | RC_SEG_E | RC_SE
 static constexpr bitmask8_t SPINNY_MID = RC_SEG_A | RC_SEG_D;
 static constexpr bitmask8_t SPINNY_RIGHT = RC_SEG_A | RC_SEG_B | RC_SEG_C | RC_SEG_D;
 
-static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[13] = { // holy jank
+static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[12] = { // holy jank
     // - - -
     {0, RC_SEG_A},
     {1, RC_SEG_A},
@@ -77,6 +83,7 @@ static uint8_t system_error_code;
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
 static uint32_t timestamp_pot_temp_display_start; // cosmetic
+static uint32_t timestamp_tempstats_last_sample; // temp sample
 
 // masks & shit
 static bitmask8_t last_input_mask = 0;
@@ -106,16 +113,19 @@ void reset_app_state(const app_state_t reset_to) {
         system_error_code = 0; // no "errors"
     }
 
-    // default values for delay and manual
+    // default values for delay and manual + more
     manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
     manual_mode_temp = DEFAULT_MANUAL_MODE_TEMP;
     delayed_mode_time_mins = DEFAULT_DELAYED_MODE_TIME;
     delayed_mode_active = false;
     config_time_edit_minutes = true;
+    tempstats_reset();
 
     // just in case
     timestamp_cook_start = 0;
     timestamp_delayed_start = 0;
+    timestamp_pot_temp_display_start = 0;
+    timestamp_tempstats_last_sample = 0;
 }
 
 void app_on_btns_press(const bitmask8_t pressed) {
@@ -378,14 +388,14 @@ static inline void app_display_countdown(const uint32_t time_left_secs, const bo
 }
 
 static inline void app_display_temperature(const uint16_t temp) {
+    // for temp <= 99: [99oC]
     if (temp <= 99u) {
         display_set_characters((digit_t[4]) {
-            temp / 10u,
-            temp % 10u,
-            SCHAR_DEG,
-            CHAR_C
+            temp / 10u, temp % 10u,
+            SCHAR_DEG, CHAR_C
         }, false);
     } else {
+        // for temp > 99: [100o]
         display_set_characters((digit_t[4]) {
             temp / 100u,
             (temp / 10u) % 10u,
@@ -409,7 +419,7 @@ void task_main_app_thread(void *args) {
             last_input_mask = current_mask;
         }
         on_platform_tick();
-        xthreads_sleep(10);
+        xthreads_sleep(APP_MAIN_INTERVAL);
     }
 }
 
@@ -417,6 +427,23 @@ void task_main_app_thread(void *args) {
 void begin_task_delayed_countdown(void) {
     timestamp_delayed_start = rc_time_current_millis();
     app_state = STATE_DELAYED_COUNTDOWN;
+}
+
+void watchdog_platform_tick(const uint32_t current_time) {
+    // watchdog for heater faults (error code 1x)
+    const heater_faults_t hfaults = heater_get_faults();
+    if (hfaults != 0) {
+        system_error_code = 10; // base error code
+        if (hfaults & HEATER_OVERHEAT_FAULT) system_error_code += 5; // code 15
+        if (hfaults & HEATER_UNDERHEAT_FAULT) system_error_code += 4; // code 14 (if both then 19)
+        reset_app_state(STATE_SYSTEM_ERROR);
+        return;
+    }
+    // collect pot temp every second
+    if (current_time - timestamp_tempstats_last_sample >= 1000u) {
+        tempstats_collect(rc_sensor_get_temp(RC_SENSOR_HEATER));
+        timestamp_tempstats_last_sample = current_time;
+    }
 }
 
 void on_delayed_countdown_end(void) {
@@ -435,6 +462,7 @@ void on_platform_tick(void) {
     }
     // platform tick while cooking
     if (app_state == STATE_COOKING || app_state == STATE_HOLD_WARM) {
+        watchdog_platform_tick(current_time);
         on_cooking_pltick(current_time);
     }
     // update output
@@ -452,16 +480,6 @@ void begin_task_cooking(void) {
 
 // TODO MAKE THIS WORK PROPERLY
 void on_cooking_pltick(const uint32_t current_time) {
-    // watchdog for heater faults (error code 1x)
-    const heater_faults_t hfaults = heater_get_faults();
-    if (hfaults != 0) {
-        system_error_code = 10; // base error code
-        if (hfaults & HEATER_OVERHEAT_FAULT) system_error_code += 5;
-        if (hfaults & HEATER_UNDERHEAT_FAULT) system_error_code += 4;
-        reset_app_state(STATE_SYSTEM_ERROR);
-        return;
-    }
-
     // TODO impl here
 }
 

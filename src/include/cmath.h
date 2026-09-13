@@ -2,6 +2,10 @@
 #define RICECOOKER_CMATH_H
 #include <stdint.h>
 
+static inline float fsquare(const float x) {
+    return x * x;
+}
+
 static inline uint16_t dcf32u16(const float value, const uint16_t max) {
     if (!(value > 0.0f)) return 0u;
     if (value >= (float)max) return max;

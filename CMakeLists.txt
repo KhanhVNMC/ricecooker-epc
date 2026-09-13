@@ -18,7 +18,7 @@ add_executable(ricecooker
         src/impl/unix/fake_tm1637.c
         src/main/ricecooker.h
         src/impl/unix/fake_btns.c
-        src/main/tempregul.c
+        src/main/tempstats.c
         src/main/tempstats.h
 )
 
