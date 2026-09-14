@@ -179,6 +179,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
             if (pressed & RC_BTN_SELECT) {
                 // after selecting temp, select time 4 manual
                 app_state = STATE_CF_MANUAL_TIME;
+                config_time_edit_minutes = true;
                 break;
             }
             if (pressed & RC_BTN_INCR) {
