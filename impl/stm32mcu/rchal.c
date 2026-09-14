@@ -19,8 +19,7 @@ void rc_tm1637dp_stop(void) {
 void rc_buzzer_play(void) {
 }
 
-float rc_sensor_get_temp(rc_temp_sensor_t sensor) {
-    (void)sensor;
+float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
     return 0.0F;
 }
 

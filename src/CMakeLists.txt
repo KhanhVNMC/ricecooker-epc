@@ -1,3 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(ricecooker_unix_fake LANGUAGES C)
+
 file(GLOB_RECURSE RICECOOKER_CORE_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.c" # all files ending with .c recursively
 )

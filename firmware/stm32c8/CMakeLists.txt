@@ -1,14 +1,15 @@
+# THIS FILE IS AI-GENERATED BECAUSE I DON'T WANT TO SPEND LIKE A DAY
+# RAVAGING AROUND THE BUILD TOOLS
 cmake_minimum_required(VERSION 3.22)
 project(ricecooker_stm32c8 LANGUAGES C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/impl/stm32mcu")
-set(STM32_CONFIG_DIR "${STM32_PLATFORM_DIR}/dcfg")
+set(STM32_DEVICES_CONFIG_DIR "${STM32_PLATFORM_DIR}/dcfg")
 
-# FreeRTOS consumes this target while its own CMake project is configured.
 add_library(freertos_config INTERFACE)
-target_include_directories(freertos_config SYSTEM INTERFACE "${STM32_CONFIG_DIR}")
+target_include_directories(freertos_config SYSTEM INTERFACE "${STM32_DEVICES_CONFIG_DIR}")
 target_compile_definitions(freertos_config INTERFACE STM32F103xB)
 
 include("${RICECOOKER_ROOT}/cmake/dependencies/stm32f1.cmake")
@@ -60,5 +61,4 @@ add_custom_command(TARGET ricecooker_stm32c8 POST_BUILD
     COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:ricecooker_stm32c8>" "${CMAKE_BINARY_DIR}/ricecooker.bin"
     COMMAND "${CMAKE_OBJCOPY}" -O ihex "$<TARGET_FILE:ricecooker_stm32c8>" "${CMAKE_BINARY_DIR}/ricecooker.hex"
     COMMAND "${CMAKE_SIZE}" "$<TARGET_FILE:ricecooker_stm32c8>"
-    COMMENT "Generating flash images and reporting firmware size"
 )

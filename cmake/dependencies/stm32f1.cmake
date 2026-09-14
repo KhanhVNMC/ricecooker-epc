@@ -1,7 +1,6 @@
+# THIS FILE IS AI-GENERATED BECAUSE I DON'T WANT TO SPEND LIKE A DAY
+# RAVAGING AROUND THE BUILD TOOLS
 include(FetchContent)
-
-# Keep normal re-configures deterministic and offline once the pinned revisions
-# have been downloaded into the build tree.
 set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 
 FetchContent_Declare(cmsis_core
@@ -51,7 +50,7 @@ add_library(stm32::hal ALIAS stm32_hal)
 target_link_libraries(stm32_hal PUBLIC stm32::cmsis_device)
 target_include_directories(stm32_hal
     PUBLIC
-        "${STM32_CONFIG_DIR}"
+        "${STM32_DEVICES_CONFIG_DIR}"
         "${stm32f1_hal_SOURCE_DIR}/Inc"
         "${stm32f1_hal_SOURCE_DIR}/Inc/Legacy"
 )
