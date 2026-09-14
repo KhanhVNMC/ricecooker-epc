@@ -1,11 +1,8 @@
-#include <stdlib.h>
-
 #include "tempstats.h"
 #include "ricecooker.h"
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
-#include "include/platform.h"
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 
@@ -487,23 +484,8 @@ void on_cooking_complete(void) {
 
 }
 
-///// PLATFORM CONTROL SHIT /////
-// threads
-static xthread_handle_t HEATER_UPDATE_THREAD;
-static xthread_handle_t MAIN_APP_THREAD;
-
-void create_app_threads() {
-    HEATER_UPDATE_THREAD = xthreads_new(task_heater_update_thread, NULL);
-    MAIN_APP_THREAD = xthreads_new(task_main_app_thread, NULL);
-}
-
-void platform_main(void) {
-    rc_init_hal(); // init HAL and RCHAL
-    platform_init_primitives(); // init GPIO and shit
-
+///// INIT SHIT /////
+void ricecooker_init(void) {
     display_set_enabled(true); // turn the screen on
     reset_app_state(STATE_IDLE); // initial boot
-
-    create_app_threads(); // create RTOS threads
-    platform_start_xthreads_sched(); // init scheduler
 }

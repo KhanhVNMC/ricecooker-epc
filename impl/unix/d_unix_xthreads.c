@@ -19,7 +19,7 @@ static void *xthread_entry(void *arg) {
     return NULL;
 }
 
-xthread_handle_t xthreads_new(xthread_func_t func, void *args) {
+xthread_handle_t* xthreads_new(const xthread_func_t func, const char *name, void *args) {
     if (func == NULL) {
         return NULL;
     }
@@ -36,12 +36,12 @@ xthread_handle_t xthreads_new(xthread_func_t func, void *args) {
     return thread;
 }
 
-void xthreads_stop(xthread_handle_t handle) {
+void xthreads_stop(const xthread_handle_t *handle) {
     if (handle == NULL) return;
-    unix_xthread_t *thread = handle;
+    const unix_xthread_t *thread = (unix_xthread_t*)handle;
     pthread_cancel(thread->thread);
     pthread_join(thread->thread, nullptr);
-    free(thread);
+    free((void*)thread);
 }
 
 void xthreads_yield(void) {

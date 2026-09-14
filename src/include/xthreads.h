@@ -6,11 +6,11 @@
 #define critical_ret(x) xthreads_csenter(); auto _ret = x; xthreads_csexit(); return _ret
 
 typedef void (*xthread_func_t)(void *args);
-typedef void *xthread_handle_t;
+typedef void xthread_handle_t;
 
 // from outside the thread
-xthread_handle_t xthreads_new(xthread_func_t func, void *args);
-void xthreads_stop(xthread_handle_t handle);
+xthread_handle_t* xthreads_new(xthread_func_t func, const char *name, void *args);
+void xthreads_stop(const xthread_handle_t *handle);
 
 // from inside the thread
 void xthreads_yield(void);

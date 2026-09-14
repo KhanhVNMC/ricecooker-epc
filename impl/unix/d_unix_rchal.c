@@ -11,7 +11,7 @@ static float sensor_values[COUNT_RC_SENSORS] = {
 
 static bool heater_state = false;
 
-void rc_init_hal(void) {
+void rc_init_rchal(void) {
     heater_state = false;
     sensor_values[RC_SENSOR_POT] = 25.0f;
     sensor_values[RC_SENSOR_HEATER] = 25.0f;

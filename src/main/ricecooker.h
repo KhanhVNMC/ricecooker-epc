@@ -41,4 +41,7 @@ typedef struct {
     bitmask8_t segment;
 } spinny_step_t; // yes, for the spinny icon...
 
+void ricecooker_init(void);
+void task_main_app_thread(void *args);
+
 #endif //RICECOOKER_RICECOOKER_H

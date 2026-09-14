@@ -3,7 +3,8 @@ file(GLOB_RECURSE RICECOOKER_CORE_SOURCES CONFIGURE_DEPENDS
 )
 
 # makes a static lib with the .c files
-add_library(ricecooker_core STATIC ${RICECOOKER_CORE_SOURCES})
+add_library(ricecooker_core STATIC ${RICECOOKER_CORE_SOURCES}
+        main/appstart.c)
 target_compile_features(ricecooker_core PUBLIC c_std_23) # c23 shit
 
 # so we dont have to #include "../../bullshit.h"

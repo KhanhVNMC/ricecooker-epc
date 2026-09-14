@@ -18,7 +18,7 @@ enum : bitmask8_t {
     RC_BTN_DECR    = 1u << 4  // decrement
 };
 
-void rc_init_hal(void);
+void rc_init_rchal(void);
 
 void rc_tm1637dp_start(void);
 void rc_tm1637dp_write_byte(uint8_t byte);
