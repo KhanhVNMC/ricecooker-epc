@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 void mt_us_timer_init(void);
-uint32_t mt_time_cnt_micros(void);
-void mt_delay_blocking_us(uint32_t delay);
+uint16_t mt_time_cnt_micros(void);
+void mt_delay_blocking_us(uint16_t delay);
 
 #endif //MICROTIME_H

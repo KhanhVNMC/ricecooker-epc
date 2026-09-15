@@ -103,7 +103,7 @@ void reset_app_state(const app_state_t reset_to) {
     // FSM reset
     app_state = reset_to;
     cooking_mode = MODE_RICE_NORMAL;
-    if (reset_to == STATE_IDLE) {
+    if (reset_to != STATE_SYSTEM_ERROR) {
         system_error_code = 0; // no "errors"
         heater_clear_faults();
     }
@@ -487,5 +487,5 @@ void on_cooking_complete(void) {
 ///// INIT SHIT /////
 void ricecooker_init(void) {
     display_set_enabled(true); // turn the screen on
-    reset_app_state(STATE_IDLE); // initial boot
+    reset_app_state(STATE_COOKING); // initial boot
 }

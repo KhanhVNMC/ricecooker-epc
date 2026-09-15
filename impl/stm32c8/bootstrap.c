@@ -31,6 +31,7 @@ void stm32_clock_init(void) {
 // called to setup necessary platform bullshit
 void platform_init_primitives(void) {
     stm32_clock_init();
+    mt_us_timer_init();
 }
 
 // called when there's an unrecoverable error

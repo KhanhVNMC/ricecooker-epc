@@ -2,6 +2,7 @@
 # RAVAGING AROUND THE BUILD TOOLS
 cmake_minimum_required(VERSION 3.22)
 project(ricecooker_stm32c8 LANGUAGES C ASM)
+add_compile_options(-gdwarf-2)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")

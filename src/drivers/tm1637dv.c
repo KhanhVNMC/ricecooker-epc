@@ -62,19 +62,22 @@ void display_set_brightness(const uint8_t brightness) {
 }
 
 // cache
+static bool cache_valid = false;
 static digit_t last_digits[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
 static bool last_colon = false;
 
 void display_set_characters(const digit_t digits[4], const bool colon) {
-    // prevent bus spamming
-    bool changed = false;
-    for (uint8_t i = 0; i < 4; i++) {
-        if (last_digits[i] != digits[i]) {
-            changed = true;
-            break;
+    if (cache_valid) {
+        // prevent bus spamming
+        bool changed = colon != last_colon;
+        for (uint8_t i = 0; i < 4; i++) {
+            if (last_digits[i] != digits[i]) {
+                changed = true;
+                break;
+            }
         }
+        if (!changed) return;
     }
-    if (!changed && (colon == last_colon)) return;
 
     // auto increment mode to not have to manually kt & send
     rc_tm1637dp_start();
@@ -99,13 +102,11 @@ void display_set_characters(const digit_t digits[4], const bool colon) {
         last_digits[i] = digits[i];
     }
     last_colon = colon;
+    cache_valid = true;
 }
 
 void display_clear_cache(void) {
-    for (uint8_t i = 0; i < 4; i++) {
-        last_digits[i] = CHAR_NULL;
-    }
-    last_colon = false;
+    cache_valid = true;
 }
 
 void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
@@ -124,4 +125,9 @@ void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
 
     // ensure the next set chars wont be stale
     display_clear_cache();
+}
+
+void display_normalize_segments(void) {
+    display_set_enabled(false);
+    display_send_raw_segments((bitmask8_t[4]) {0, 0, 0, 0});
 }

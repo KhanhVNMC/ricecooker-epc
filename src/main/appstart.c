@@ -2,6 +2,7 @@
 #include "include/heaterctl.h"
 #include "include/xthreads.h"
 #include "include/platform.h"
+#include "include/tm1637dv.h"
 
 // threads
 static xthread_handle_t *MAIN_APP_THREAD;
@@ -13,8 +14,9 @@ void create_app_threads() {
 }
 
 void platform_main(void) {
-    rc_init_rchal(); // init RCHAL
     platform_init_primitives(); // init GPIO and shit
+    rc_init_rchal(); // init RCHAL
+    display_normalize_segments();
 
     ricecooker_init(); // init rice
 

@@ -73,11 +73,15 @@ void mt_us_timer_init(void) {
     // increments up every microsec
     tim2_us_timer.Init.Prescaler = (timer_clock / 1000000U) - 1U; // the prescaler + 1 before dividing, somehow, so -1 to compensate
     tim2_us_timer.Init.CounterMode = TIM_COUNTERMODE_UP; // count up
-    tim2_us_timer.Init.Period = 0xFFFFFFFFU;
+    tim2_us_timer.Init.Period = 0xFFFFU;
 
     // default values
     tim2_us_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
     tim2_us_timer.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+
+    if (HAL_TIM_Base_Init(&tim2_us_timer) != HAL_OK) {
+        platform_on_error(HAL_INIT_US_SLEEP);
+    }
 
     if (HAL_TIM_Base_Start(&tim2_us_timer) != HAL_OK) {
         platform_on_error(HAL_INIT_US_SLEEP);
@@ -85,12 +89,12 @@ void mt_us_timer_init(void) {
 }
 
 // this is NOT SUITABEL for timestamp because it wraps like crazy
-uint32_t mt_time_cnt_micros(void) {
+uint16_t mt_time_cnt_micros(void) {
     return __HAL_TIM_GET_COUNTER(&tim2_us_timer);
 }
 
-void mt_delay_blocking_us(const uint32_t delay) {
-    const uint32_t start = mt_time_cnt_micros();
+void mt_delay_blocking_us(const uint16_t delay) {
+    const uint16_t start = mt_time_cnt_micros();
     // block until current >= start + delay
     while (mt_time_cnt_micros() - start < delay) {
         /*busy wait*/

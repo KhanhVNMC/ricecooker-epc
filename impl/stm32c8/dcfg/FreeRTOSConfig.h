@@ -9,7 +9,7 @@
 #define configTICK_RATE_HZ                      ((TickType_t)1000)
 #define configMAX_PRIORITIES                    5
 #define configMINIMAL_STACK_SIZE                ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                   (1U * 1024U) // 1K heap
+#define configTOTAL_HEAP_SIZE                   (8U * 1024U) // 8K heap
 #define configMAX_TASK_NAME_LEN                 16
 #define configUSE_16_BIT_TICKS                  0
 #define configIDLE_SHOULD_YIELD                 1

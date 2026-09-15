@@ -40,5 +40,6 @@ void display_set_brightness(uint8_t brightness);
 void display_set_characters(const digit_t digits[4], bool colon);
 void display_clear_cache(void);
 void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]);
+void display_normalize_segments(void);
 
 #endif //TM1637DV_H
