@@ -96,7 +96,8 @@ uint16_t mt_time_cnt_micros(void) {
 void mt_delay_blocking_us(const uint16_t delay) {
     const uint16_t start = mt_time_cnt_micros();
     // block until current >= start + delay
-    while (mt_time_cnt_micros() - start < delay) {
+    // cast it to an uint so it can wrap properly
+    while ((uint16_t)(mt_time_cnt_micros() - start) < delay) {
         /*busy wait*/
     }
 }

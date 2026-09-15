@@ -63,7 +63,7 @@ void display_set_brightness(const uint8_t brightness) {
 
 // cache
 static bool cache_valid = false;
-static digit_t last_digits[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
+static digit_t last_digits[4];
 static bool last_colon = false;
 
 void display_set_characters(const digit_t digits[4], const bool colon) {
@@ -106,7 +106,7 @@ void display_set_characters(const digit_t digits[4], const bool colon) {
 }
 
 void display_clear_cache(void) {
-    cache_valid = true;
+    cache_valid = false;
 }
 
 void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
