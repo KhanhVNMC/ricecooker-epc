@@ -4,6 +4,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(RICECOOKER_BUILD_STM32 "Build the STM32F103C8 firmware" OFF)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+
 if(RICECOOKER_BUILD_STM32)
     add_subdirectory(builder/stm32c8)
 else()

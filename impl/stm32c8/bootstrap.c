@@ -1,5 +1,6 @@
 #include "include/platform.h"
 #include "stm32f1xx_hal.h"
+#include "microtime.h"
 
 // this setups necessary oscillator and sysclock inside the mcu
 void stm32_clock_init(void) {

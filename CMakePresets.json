@@ -5,21 +5,21 @@
       "name": "host-debug",
       "displayName": "Unix harness Debug",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/host/debug",
+      "binaryDir": "${sourceDir}/artifacts/host/debug",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Debug" }
     },
     {
       "name": "host-release",
       "displayName": "Unix harness Release",
       "inherits": "host-debug",
-      "binaryDir": "${sourceDir}/build/host/release",
+      "binaryDir": "${sourceDir}/artifacts/host/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
       "name": "stm32c8-debug",
       "displayName": "STM32F103C8 Debug",
       "generator": "Unix Makefiles",
-      "binaryDir": "${sourceDir}/build/stm32c8/debug",
+      "binaryDir": "${sourceDir}/artifacts/stm32c8/debug",
       "toolchainFile": "${sourceDir}/cmake/toolchains/arm-none-eabi.cmake",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -30,7 +30,7 @@
       "name": "stm32c8-release",
       "displayName": "STM32C8 MCU Release",
       "inherits": "stm32c8-debug",
-      "binaryDir": "${sourceDir}/build/stm32c8/release",
+      "binaryDir": "${sourceDir}/artifacts/stm32c8/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
   ],

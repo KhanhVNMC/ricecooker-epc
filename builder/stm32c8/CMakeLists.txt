@@ -5,7 +5,7 @@ project(ricecooker_stm32c8 LANGUAGES C ASM)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
-set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/impl/stm32mcu")
+set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/impl/stm32c8")
 set(STM32_DEVICES_CONFIG_DIR "${STM32_PLATFORM_DIR}/dcfg")
 
 # configure freertos params
