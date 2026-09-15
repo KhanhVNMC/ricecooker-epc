@@ -16,7 +16,7 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     },
     {
-      "name": "stm32-debug",
+      "name": "stm32c8-debug",
       "displayName": "STM32F103C8 Debug",
       "generator": "Unix Makefiles",
       "binaryDir": "${sourceDir}/build/stm32c8/debug",
@@ -27,9 +27,9 @@
       }
     },
     {
-      "name": "stm32-release",
-      "displayName": "STM32F103C8 Release",
-      "inherits": "stm32-debug",
+      "name": "stm32c8-release",
+      "displayName": "STM32C8 MCU Release",
+      "inherits": "stm32c8-debug",
       "binaryDir": "${sourceDir}/build/stm32c8/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
     }
@@ -37,7 +37,7 @@
   "buildPresets": [
     { "name": "host-debug", "configurePreset": "host-debug", "jobs": 0 },
     { "name": "host-release", "configurePreset": "host-release", "jobs": 0 },
-    { "name": "stm32-debug", "configurePreset": "stm32-debug", "jobs": 0 },
-    { "name": "stm32-release", "configurePreset": "stm32-release", "jobs": 0 }
+    { "name": "stm32c8-debug", "configurePreset": "stm32c8-debug", "jobs": 0 },
+    { "name": "stm32c8-release", "configurePreset": "stm32c8-release", "jobs": 0 }
   ]
 }

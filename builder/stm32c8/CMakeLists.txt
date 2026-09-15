@@ -8,17 +8,23 @@ set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
 set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/impl/stm32mcu")
 set(STM32_DEVICES_CONFIG_DIR "${STM32_PLATFORM_DIR}/dcfg")
 
+# configure freertos params
 add_library(freertos_config INTERFACE)
 target_include_directories(freertos_config SYSTEM INTERFACE "${STM32_DEVICES_CONFIG_DIR}")
 target_compile_definitions(freertos_config INTERFACE STM32F103xB)
 
+# cmake for STM32 HAL chip
 include("${RICECOOKER_ROOT}/cmake/dependencies/stm32f1.cmake")
+
+# shared lib with the unix harness
 add_subdirectory("${RICECOOKER_ROOT}/src" "${CMAKE_CURRENT_BINARY_DIR}/ricecooker_core")
 
+# platform impl
 file(GLOB_RECURSE STM32_PLATFORM_SOURCES CONFIGURE_DEPENDS
     "${STM32_PLATFORM_DIR}/*.c"
 )
 
+# no idea (it just builds and link idc enough to understand it)
 add_executable(ricecooker_stm32c8
     ${STM32_PLATFORM_SOURCES}
     "${cmsis_device_f1_SOURCE_DIR}/Source/Templates/system_stm32f1xx.c"
