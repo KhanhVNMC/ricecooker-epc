@@ -7,8 +7,16 @@
 #define TM1637_CLK_PIN      GPIO_PIN_10
 #define TM1637_DIO_PIN      GPIO_PIN_11
 
+#define BTNS_GPIO_PORT      GPIOA
+#define BTN_SELECT_PIN      GPIO_PIN_3
+#define BTN_CANCEL_PIN      GPIO_PIN_4
+#define BTN_OPTIONS_PIN     GPIO_PIN_5
+#define BTN_INCR_PIN        GPIO_PIN_6
+#define BTN_DECR_PIN        GPIO_PIN_7
+
 void rc_init_rchal(void) {
     // enable ports (we use B for now)
+    __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
 
     // TM1637 DIO/CLK pins config
@@ -67,7 +75,13 @@ float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
 }
 
 bitmask8_t rc_buttons_get_state(void) {
-    return 0U;
+    bitmask8_t buttons = 0u;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_SELECT_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_SELECT;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_CANCEL_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_CANCEL;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_OPTIONS_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_OPTIONS;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_INCR_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_INCR;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_DECR_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_DECR;
+    return buttons;
 }
 
 static bool dummy;

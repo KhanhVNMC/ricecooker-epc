@@ -491,5 +491,5 @@ void on_cooking_complete(void) {
 ///// INIT SHIT /////
 void ricecooker_init(void) {
     display_set_enabled(true); // turn the screen on
-    reset_app_state(STATE_COOKING); // initial boot
+    reset_app_state(STATE_IDLE); // initial boot
 }
