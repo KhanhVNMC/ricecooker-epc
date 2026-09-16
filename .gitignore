@@ -3,3 +3,5 @@ cmake-build-debug
 build/
 bin/
 .idea/editor.xml
+Project Backups
+*.workspace

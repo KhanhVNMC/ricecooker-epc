@@ -18,8 +18,26 @@ void platform_main(void) {
     rc_init_rchal(); // init RCHAL
     display_normalize_segments();
 
-    ricecooker_init(); // init rice
+    display_set_characters((digit_t[4]) {1, 2, 3, 4}, false);
+    display_set_enabled(true);
+    const uint32_t intro_start = rc_time_current_millis();
+    while (rc_time_current_millis() - intro_start < 1000u) {
+        /* Wait one second on the HAL clock without the scheduler. */
+    }
 
-    create_app_threads(); // create RTOS threads
-    platform_start_xthreads_sched(); // init scheduler
+    // Force the instruction with the same input/output register; CLZ(8) is 28.
+    uint32_t clz_result = 1u << 3;
+    __asm__ volatile ("clz %0, %0" : "+r" (clz_result));
+    display_set_characters((digit_t[4]) {
+        (clz_result / 1000u) % 10u,
+        (clz_result / 100u) % 10u,
+        (clz_result / 10u) % 10u,
+        clz_result % 10u
+    }, false);
+
+    for (;;) {}
+    // ricecooker_init(); // init rice
+    //
+    // create_app_threads(); // create RTOS threads
+    // platform_start_xthreads_sched(); // init scheduler
 }

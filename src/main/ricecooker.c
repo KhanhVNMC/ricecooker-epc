@@ -262,7 +262,7 @@ void update_rc_display(void) {
             display_set_characters(
                 (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u // blink every Xms
                 ? mode_to_digits[cooking_mode] : BLANK,
-                (app_state == STATE_CF_DELAYED_MODE_SELECT) // : if delayed
+                (app_state != STATE_MODE_SELECT) // : if delayed
             );
             break;
         }
