@@ -7,6 +7,9 @@
 #include "include/heaterctl.h"
 
 #define APP_MAIN_INTERVAL           (10)
+#define APP_ANIM_FRAME_FAST_MS      (200u)
+#define APP_ANIM_FRAME_NORMAL_MS    (250u)
+#define APP_ANIM_FRAME_SOFT_MS      (300u)
 
 #define CONFIG_TIME_MINUTES_STEP    (1)
 #define CONFIG_TEMP_STEP            (5)
@@ -281,10 +284,11 @@ void update_rc_display(void) {
                 );
                 break;
             }
+
             // SHOW SPINNING ANIMATION for everything else
-            uint8_t per_frame = 150u; // 250ms/frame for soft, 150 for normal and 50 for fast)
-            if (cooking_mode == MODE_FAST_RICE) per_frame = 50u;
-            else if (cooking_mode == MODE_SOFT_SIMMER) per_frame = 250u;
+            uint16_t per_frame = APP_ANIM_FRAME_NORMAL_MS;
+            if (cooking_mode == MODE_FAST_RICE) per_frame = APP_ANIM_FRAME_FAST_MS;
+            else if (cooking_mode == MODE_SOFT_SIMMER) per_frame = APP_ANIM_FRAME_SOFT_MS;
 
             // spinning animation (12 frames)
             const uint8_t frame = (current_time / per_frame) % 12u;

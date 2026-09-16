@@ -63,46 +63,33 @@ void display_set_brightness(const uint8_t brightness) {
 
 // cache
 static bool cache_valid = false;
-static digit_t last_digits[4];
-static bool last_colon = false;
+static bitmask8_t last_digit_masks[4];
 
-void display_set_characters(const digit_t digits[4], const bool colon) {
-    if (cache_valid) {
-        // prevent bus spamming
-        bool changed = colon != last_colon;
-        for (uint8_t i = 0; i < 4; i++) {
-            if (last_digits[i] != digits[i]) {
-                changed = true;
-                break;
-            }
+static bool should_send_update(const bitmask8_t digit_bitmasks[4]) {
+    if (!cache_valid) return true;
+    for (uint8_t i = 0; i < 4; i++) {
+        if (last_digit_masks[i] != digit_bitmasks[i]) {
+            return true;
         }
-        if (!changed) return;
     }
+    return false;
+}
 
-    // auto increment mode to not have to manually kt & send
-    rc_tm1637dp_start();
-    rc_tm1637dp_write_byte(TM_CMD_DATA_AUTO_INC);
-    rc_tm1637dp_stop();
-
-    // send the digits
-    rc_tm1637dp_start();
-    rc_tm1637dp_write_byte(TM_ADDRESS_START);
+static void digits_to_bitmasks(bitmask8_t *out, const digit_t digits[4], const bool colon) {
     for (uint8_t i = 0; i < 4; i++) {
         const digit_t digit = digits[i];
         bitmask8_t mask = digit == CHAR_NULL ? 0x00 : digit_to_dp_matrix[digit];
         if (i == 1 && colon) {
             mask |= RC_SEG_DP; // for the colon
         }
-        rc_tm1637dp_write_byte(mask);
+        out[i] = mask;
     }
-    rc_tm1637dp_stop();
+}
 
-    // update cached
-    for (uint8_t i = 0; i < 4; i++) {
-        last_digits[i] = digits[i];
-    }
-    last_colon = colon;
-    cache_valid = true;
+void display_set_characters(const digit_t digits[4], const bool colon) {
+    bitmask8_t out_masks[4];
+    digits_to_bitmasks(out_masks, digits, colon);
+    display_send_raw_segments(out_masks);
 }
 
 void display_clear_cache(void) {
@@ -110,6 +97,11 @@ void display_clear_cache(void) {
 }
 
 void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
+    // prevent bus spamming
+    if (!should_send_update(digit_bitmasks)) {
+        return;
+    }
+
     // auto increment mode to not have to manually kt & send
     rc_tm1637dp_start();
     rc_tm1637dp_write_byte(TM_CMD_DATA_AUTO_INC);
@@ -119,15 +111,18 @@ void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
     rc_tm1637dp_start();
     rc_tm1637dp_write_byte(TM_ADDRESS_START);
     for (uint8_t i = 0; i < 4; i++) {
-        rc_tm1637dp_write_byte(digit_bitmasks[i]);
+        const bitmask8_t mask = digit_bitmasks[i];
+        rc_tm1637dp_write_byte(mask);
+        last_digit_masks[i] = mask;
     }
     rc_tm1637dp_stop();
 
-    // ensure the next set chars wont be stale
-    display_clear_cache();
+    // cache is now valid
+    cache_valid = true;
 }
 
 void display_normalize_segments(void) {
+    display_clear_cache();
     display_set_enabled(false);
     display_send_raw_segments((bitmask8_t[4]) {0, 0, 0, 0});
 }
