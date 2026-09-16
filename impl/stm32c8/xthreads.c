@@ -14,7 +14,7 @@ xthread_handle_t *xthreads_new(const xthread_func_t func, const char *name, void
     TaskHandle_t handle = nullptr;
     const BaseType_t result = xTaskCreate( // this creates freertos thread
         func, name,
-        configMINIMAL_STACK_SIZE, args,
+        configMINIMAL_STACK_SIZE * 2, args,
         tskIDLE_PRIORITY + 1U, &handle
     );
     return result == pdPASS ? (xthread_handle_t*)handle : NULL;

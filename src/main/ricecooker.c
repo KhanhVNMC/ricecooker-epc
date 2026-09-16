@@ -7,6 +7,7 @@
 #include "include/heaterctl.h"
 
 #define APP_MAIN_INTERVAL           (10)
+#define APP_BLINK_INTERVAL          (500u)
 #define APP_ANIM_FRAME_FAST_MS      (200u)
 #define APP_ANIM_FRAME_NORMAL_MS    (250u)
 #define APP_ANIM_FRAME_SOFT_MS      (300u)
@@ -248,7 +249,7 @@ void update_rc_display(void) {
             break;
         }
         case STATE_SYSTEM_ERROR: {
-            const bool blink = (rc_time_current_millis() / 500u) & 1u;
+            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u;
             // display blinking [ERR:<code>]
             display_set_characters(blink ?
                 (digit_t[4]) {CHAR_E, CHAR_R, system_error_code / 10, system_error_code % 10}
@@ -259,8 +260,8 @@ void update_rc_display(void) {
         case STATE_CF_DELAYED_MODE_SELECT:
         case STATE_MODE_SELECT: {
             display_set_characters(
-                (rc_time_current_millis() / 500u) & 1u // blink every 500ms
-                ? mode_to_digits[cooking_mode]: BLANK,
+                (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u // blink every Xms
+                ? mode_to_digits[cooking_mode] : BLANK,
                 (app_state == STATE_CF_DELAYED_MODE_SELECT) // : if delayed
             );
             break;
@@ -280,7 +281,7 @@ void update_rc_display(void) {
                 const uint32_t duration_ms = manual_mode_time_mins * 60000u;
                 app_display_countdown(
                     ((timestamp_cook_start + duration_ms) - current_time) / 1000u,
-                    (current_time / 500u) & 1u
+                    (current_time / APP_BLINK_INTERVAL) & 1u
                 );
                 break;
             }
@@ -308,7 +309,7 @@ void update_rc_display(void) {
                 const uint32_t duration_ms = delayed_mode_time_mins * 60000u;
                 app_display_countdown(
                     ((timestamp_delayed_start + duration_ms) - current_time) / 1000u,
-                    (current_time / 500u) & 1u
+                    (current_time / APP_BLINK_INTERVAL) & 1u
                 );
                 break;
             }
@@ -322,7 +323,7 @@ void update_rc_display(void) {
         }
         case STATE_CF_MANUAL_TIME:
         case STATE_CF_DELAYED_TIME: {
-            const bool blink = (rc_time_current_millis() / 500u) & 1u;
+            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u;
             const uint32_t time_source_mins = app_state == STATE_CF_MANUAL_TIME
                 ? manual_mode_time_mins : delayed_mode_time_mins
             ;

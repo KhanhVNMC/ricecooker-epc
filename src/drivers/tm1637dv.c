@@ -79,7 +79,7 @@ static void digits_to_bitmasks(bitmask8_t *out, const digit_t digits[4], const b
     for (uint8_t i = 0; i < 4; i++) {
         const digit_t digit = digits[i];
         bitmask8_t mask = digit == CHAR_NULL ? 0x00 : digit_to_dp_matrix[digit];
-        if (i == 1 && colon) {
+        if (colon) {
             mask |= RC_SEG_DP; // for the colon
         }
         out[i] = mask;
@@ -87,7 +87,7 @@ static void digits_to_bitmasks(bitmask8_t *out, const digit_t digits[4], const b
 }
 
 void display_set_characters(const digit_t digits[4], const bool colon) {
-    bitmask8_t out_masks[4];
+    bitmask8_t out_masks[4] = {0};
     digits_to_bitmasks(out_masks, digits, colon);
     display_send_raw_segments(out_masks);
 }

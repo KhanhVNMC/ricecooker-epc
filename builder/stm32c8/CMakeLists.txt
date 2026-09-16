@@ -65,6 +65,7 @@ target_link_options(ricecooker_stm32c8 PRIVATE
 set_property(TARGET ricecooker_stm32c8 APPEND PROPERTY LINK_DEPENDS "${STM32_LINKER_SCRIPT}")
 
 add_custom_command(TARGET ricecooker_stm32c8 POST_BUILD
+    COMMAND "${CMAKE_OBJCOPY}" --strip-debug "$<TARGET_FILE:ricecooker_stm32c8>" "${CMAKE_BINARY_DIR}/ricecooker.stripped.elf"
     COMMAND "${CMAKE_OBJCOPY}" -O binary "$<TARGET_FILE:ricecooker_stm32c8>" "${CMAKE_BINARY_DIR}/ricecooker.bin"
     COMMAND "${CMAKE_OBJCOPY}" -O ihex "$<TARGET_FILE:ricecooker_stm32c8>" "${CMAKE_BINARY_DIR}/ricecooker.hex"
     COMMAND "${CMAKE_SIZE}" "$<TARGET_FILE:ricecooker_stm32c8>"

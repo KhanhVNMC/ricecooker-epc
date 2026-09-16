@@ -2,7 +2,6 @@
 #include "stm32f1xx_hal.h"
 #include "microtime.h"
 
-// TODO EVERYTHING (Except the timer and display ig)
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
 #define TM1637_DIO_PIN      GPIO_PIN_11
@@ -67,21 +66,22 @@ void rc_tm1637dp_stop(void) {
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_SET);
 }
 
+bitmask8_t rc_buttons_get_state(void) {
+    bitmask8_t buttons = 0u; // read button mask from the hardware btns
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_SELECT_PIN) == GPIO_PIN_SET)  buttons |= RC_BTN_SELECT;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_CANCEL_PIN) == GPIO_PIN_SET)  buttons |= RC_BTN_CANCEL;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_OPTIONS_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_OPTIONS;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_INCR_PIN) == GPIO_PIN_SET)    buttons |= RC_BTN_INCR;
+    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_DECR_PIN) == GPIO_PIN_SET)    buttons |= RC_BTN_DECR;
+    return buttons;
+}
+
 void rc_buzzer_play(void) {
+
 }
 
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
-    return 25.0f;
-}
-
-bitmask8_t rc_buttons_get_state(void) {
-    bitmask8_t buttons = 0u;
-    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_SELECT_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_SELECT;
-    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_CANCEL_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_CANCEL;
-    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_OPTIONS_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_OPTIONS;
-    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_INCR_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_INCR;
-    if (HAL_GPIO_ReadPin(BTNS_GPIO_PORT, BTN_DECR_PIN) == GPIO_PIN_SET) buttons |= RC_BTN_DECR;
-    return buttons;
+    return 36.0f;
 }
 
 static bool dummy;
