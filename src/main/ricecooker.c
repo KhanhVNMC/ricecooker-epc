@@ -415,6 +415,7 @@ void task_main_app_thread(void *args) {
             // only fire event on btn press (not release)
             const bitmask8_t changed = current_mask & ~last_input_mask;
             if (changed) {
+                rc_buzzer_play();
                 app_on_btns_press(changed);
             }
             last_input_mask = current_mask;
