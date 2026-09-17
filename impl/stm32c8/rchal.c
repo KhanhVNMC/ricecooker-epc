@@ -1,6 +1,7 @@
 #include "include/rchal.h"
 #include "stm32f1xx_hal.h"
 #include "microtime.h"
+#include "include/xthreads.h"
 
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
@@ -12,6 +13,9 @@
 #define BTN_OPTIONS_PIN     GPIO_PIN_5
 #define BTN_INCR_PIN        GPIO_PIN_6
 #define BTN_DECR_PIN        GPIO_PIN_7
+
+#define BUZZER_GPIO_PORT    GPIOB
+#define BUZZER_PIN          GPIO_PIN_9
 
 void rc_init_rchal(void) {
     // enable ports (we use B for now)
@@ -26,6 +30,15 @@ void rc_init_rchal(void) {
     tm1637_pins_conf.Speed = GPIO_SPEED_FREQ_HIGH;
     tm1637_pins_conf.Pin = TM1637_CLK_PIN | TM1637_DIO_PIN;
     HAL_GPIO_Init(TM1637_GPIO_PORT, &tm1637_pins_conf);
+
+    // BUZZER pín config
+    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET); // muted by default
+    GPIO_InitTypeDef buzzer_conf = {0}; // now can config
+    buzzer_conf.Pin = BUZZER_PIN;
+    buzzer_conf.Mode = GPIO_MODE_OUTPUT_PP; // push-pull drive for transistor saturation
+    buzzer_conf.Pull = GPIO_NOPULL;
+    buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW; // 2MHz
+    HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
 }
 
 void rc_tm1637dp_start(void) {
@@ -77,7 +90,9 @@ bitmask8_t rc_buttons_get_state(void) {
 }
 
 void rc_buzzer_play(void) {
-
+    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_SET);
+    xthreads_sleep(100);
+    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
 }
 
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
