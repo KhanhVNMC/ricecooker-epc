@@ -22,7 +22,7 @@ void rc_init_rchal(void) {
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN | TM1637_DIO_PIN, GPIO_PIN_SET); // normalize first
     GPIO_InitTypeDef tm1637_pins_conf = {0}; // now can config
     tm1637_pins_conf.Mode = GPIO_MODE_OUTPUT_OD; // open drain
-    tm1637_pins_conf.Pull = GPIO_PULLUP; // the TM1637 module has a pull up resistor already
+    tm1637_pins_conf.Pull = GPIO_NOPULL; // the TM1637 module has a pull up resistor already
     tm1637_pins_conf.Speed = GPIO_SPEED_FREQ_HIGH;
     tm1637_pins_conf.Pin = TM1637_CLK_PIN | TM1637_DIO_PIN;
     HAL_GPIO_Init(TM1637_GPIO_PORT, &tm1637_pins_conf);
