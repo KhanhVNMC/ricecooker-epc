@@ -1,6 +1,7 @@
 #ifndef STM32F1XX_HAL_CONF_H
 #define STM32F1XX_HAL_CONF_H
 
+#define HAL_ADC_MODULE_ENABLED
 #define HAL_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
 #define HAL_DMA_MODULE_ENABLED
@@ -62,6 +63,9 @@
 #include "stm32f1xx_hal_dma.h"
 #include "stm32f1xx_hal_flash.h"
 #include "stm32f1xx_hal_tim.h"
+#ifdef HAL_ADC_MODULE_ENABLED
+#include "stm32f1xx_hal_adc.h"
+#endif
 
 #ifdef USE_FULL_ASSERT
 void assert_failed(uint8_t *file, uint32_t line);

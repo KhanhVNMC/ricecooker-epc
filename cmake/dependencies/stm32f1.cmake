@@ -43,8 +43,11 @@ add_library(stm32_hal STATIC
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_flash_ex.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_gpio.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_rcc.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_rcc_ex.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_tim.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_tim_ex.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_adc.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_adc_ex.c"
 )
 add_library(stm32::hal ALIAS stm32_hal)
 target_link_libraries(stm32_hal PUBLIC stm32::cmsis_device)

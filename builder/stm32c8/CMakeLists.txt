@@ -51,6 +51,7 @@ target_link_libraries(ricecooker_stm32c8 PRIVATE
     ricecooker_core
     stm32::hal
     freertos_kernel
+    m
 )
 
 set(STM32_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/STM32F103C8_FLASH.ld")
