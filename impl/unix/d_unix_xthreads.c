@@ -19,7 +19,10 @@ static void *xthread_entry(void *arg) {
     return NULL;
 }
 
-xthread_handle_t* xthreads_new(const xthread_func_t func, const char *name, void *args) {
+xthread_handle_t *xthreads_new(
+    const xthread_func_t func, void *args,
+    const thread_priority_t, const char*
+) {
     if (func == NULL) {
         return NULL;
     }
@@ -68,4 +71,25 @@ void xthreads_csenter(void) {
 
 void xthreads_csexit(void) {
     pthread_mutex_unlock(&mtx);
+}
+
+static pthread_mutex_t notify_mtx = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t notify_cv = PTHREAD_COND_INITIALIZER;
+static bool notified = false;
+
+void xthreads_notify(const xthread_handle_t *handle) {
+    (void)handle;
+    pthread_mutex_lock(&notify_mtx);
+    notified = true;
+    pthread_cond_signal(&notify_cv);
+    pthread_mutex_unlock(&notify_mtx);
+}
+
+void xthreads_wait(const xthread_wait_mode_t) {
+    pthread_mutex_lock(&notify_mtx);
+    while (!notified) {
+        pthread_cond_wait(&notify_cv, &notify_mtx);
+    }
+    notified = false;
+    pthread_mutex_unlock(&notify_mtx);
 }

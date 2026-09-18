@@ -1,10 +1,12 @@
 #include "tempstats.h"
 #include "ricecooker.h"
+
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
+#include "include/buzzerctl.h"
 
 #define APP_MAIN_INTERVAL           (10)
 #define APP_BLINK_INTERVAL          (500u)
@@ -187,12 +189,10 @@ void app_on_btns_press(const bitmask8_t pressed) {
                 if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
                     manual_mode_temp += CONFIG_TEMP_STEP;
                 }
-                rc_buzzer_play();
             } else if (pressed & RC_BTN_DECR) {
                 if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
                     manual_mode_temp -= CONFIG_TEMP_STEP;
                 }
-                rc_buzzer_play();
             }
             break;
         }
@@ -357,12 +357,10 @@ static void config_adjust_time(uint16_t *time_mins_dest, const bitmask8_t presse
         if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
             *time_mins_dest += to_change;
         }
-        rc_buzzer_play();
     } else if (pressed & RC_BTN_DECR) {
         if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
             *time_mins_dest -= to_change;
         }
-        rc_buzzer_play();
     }
 }
 
@@ -415,7 +413,7 @@ void task_main_app_thread(void *args) {
             // only fire event on btn press (not release)
             const bitmask8_t changed = current_mask & ~last_input_mask;
             if (changed) {
-                rc_buzzer_play();
+                buzzer_play_beep();
                 app_on_btns_press(changed);
             }
             last_input_mask = current_mask;

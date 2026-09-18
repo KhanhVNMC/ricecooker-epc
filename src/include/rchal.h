@@ -24,7 +24,7 @@ void rc_tm1637dp_start(void);
 void rc_tm1637dp_write_byte(uint8_t byte);
 void rc_tm1637dp_stop(void);
 
-void rc_buzzer_play(void);
+void rc_buzzer_set(bool on);
 
 float rc_sensor_get_temp(rc_temp_sensor_t sensor);
 

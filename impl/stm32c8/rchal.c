@@ -89,10 +89,8 @@ bitmask8_t rc_buttons_get_state(void) {
     return buttons;
 }
 
-void rc_buzzer_play(void) {
-    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_SET);
-    xthreads_sleep(100);
-    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET);
+void rc_buzzer_set(const bool on) {
+    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
 }
 
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
