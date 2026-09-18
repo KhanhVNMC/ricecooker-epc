@@ -1,6 +1,7 @@
 #include "include/rchal.h"
-#include "stm32f1xx_hal.h"
+#include "stm32f1xx_hal_adc.h"
 #include "microtime.h"
+#include <fastmath.h>
 
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
@@ -18,6 +19,53 @@
 
 #define BUZZER_GPIO_PORT    GPIOB
 #define BUZZER_PIN          GPIO_PIN_9
+
+#define NTC_R_REF           10000.0f
+#define NTC_R0              100000.0f
+#define NTC_TO_KELVIN       298.15f
+#define NTC_BETA            3950.0f
+#define ADC_MAX_VAL         4095.0f
+
+static ADC_HandleTypeDef hadc1;
+
+void init_all_adcs(void) {
+    __HAL_RCC_ADC1_CLK_ENABLE();
+
+    // configure PA1 and PA2 as analog pins
+    GPIO_InitTypeDef gpio_adc = {0};
+    gpio_adc.Pin = GPIO_PIN_1 | GPIO_PIN_2;
+    gpio_adc.Mode = GPIO_MODE_ANALOG;
+    gpio_adc.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &gpio_adc);
+
+    // ADC1 configuration
+    hadc1.Instance = ADC1;
+    hadc1.Init.ScanConvMode = ADC_SCAN_DISABLE;
+    hadc1.Init.ContinuousConvMode = DISABLE;
+    hadc1.Init.DiscontinuousConvMode = DISABLE;
+    hadc1.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+    hadc1.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+    hadc1.Init.NbrOfConversion = 1;
+    HAL_ADC_Init(&hadc1);
+
+    // ADC self-calibration
+    HAL_ADCEx_Calibration_Start(&hadc1);
+}
+
+uint16_t adc_read_channel(uint32_t channel) {
+    ADC_ChannelConfTypeDef sConfig = {0};
+    sConfig.Channel = channel;
+    sConfig.Rank = ADC_REGULAR_RANK_1;
+    sConfig.SamplingTime = ADC_SAMPLETIME_71CYCLES_5;
+    HAL_ADC_ConfigChannel(&hadc1, &sConfig);
+
+    HAL_ADC_Start(&hadc1);
+    HAL_ADC_PollForConversion(&hadc1, 10);
+    uint16_t val = (uint16_t)HAL_ADC_GetValue(&hadc1);
+    HAL_ADC_Stop(&hadc1);
+
+    return val;
+}
 
 void rc_init_rchal(void) {
     // enable ports (we use B for now)
@@ -50,6 +98,9 @@ void rc_init_rchal(void) {
     heater_cfg.Pull = GPIO_NOPULL;
     heater_cfg.Speed = GPIO_SPEED_FREQ_LOW;
     HAL_GPIO_Init(HEATER_GPIO_PORT, &heater_cfg);
+
+    // ADC1 initialization
+    init_all_adcs();
 }
 
 void rc_tm1637dp_start(void) {
@@ -105,7 +156,26 @@ void rc_buzzer_set(const bool on) {
 }
 
 float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
-    return 36.0f;
+    uint32_t channel = (sensor == RC_SENSOR_POT) ? ADC_CHANNEL_1 : ADC_CHANNEL_2;
+
+    // take the average of 8 samples
+    uint32_t adc_sum = 0;
+    for (int i = 0; i < 8; i++) {
+        adc_sum += adc_read_channel(channel);
+    }
+    float raw_adc = (float)adc_sum / 8.0f;
+
+    if (raw_adc < 1.0f) raw_adc = 1.0f;
+    if (raw_adc >= 4094.0f) raw_adc = 4094.0f;
+
+    // R_ntc = R_ref / ((ADC_MAX / raw_adc) - 1)
+    float r_ntc = NTC_R_REF / ((ADC_MAX_VAL / raw_adc) - 1.0f);
+
+    // beta function: 1/T = 1/T0 + (1/B) * ln(R / R0)
+    float steinhart = (1.0f / NTC_TO_KELVIN) + (1.0f / NTC_BETA) * logf(r_ntc / NTC_R0);
+    float temp_celsius = (1.0f / steinhart) - 273.15f;
+
+    return temp_celsius;
 }
 
 static bool heater_switched_on = false;
