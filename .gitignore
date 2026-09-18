@@ -5,3 +5,5 @@ bin/
 .idea/editor.xml
 Project Backups
 *.workspace
+.vscode
+.clangd
