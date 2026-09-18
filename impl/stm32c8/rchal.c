@@ -1,7 +1,6 @@
 #include "include/rchal.h"
 #include "stm32f1xx_hal.h"
 #include "microtime.h"
-#include "include/xthreads.h"
 
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
@@ -13,6 +12,9 @@
 #define BTN_OPTIONS_PIN     GPIO_PIN_5
 #define BTN_INCR_PIN        GPIO_PIN_6
 #define BTN_DECR_PIN        GPIO_PIN_7
+
+#define HEATER_GPIO_PORT    GPIOA
+#define HEATER_PIN          GPIO_PIN_10
 
 #define BUZZER_GPIO_PORT    GPIOB
 #define BUZZER_PIN          GPIO_PIN_9
@@ -39,6 +41,15 @@ void rc_init_rchal(void) {
     buzzer_conf.Pull = GPIO_NOPULL;
     buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW; // 2MHz
     HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
+
+    // heating element pín config
+    HAL_GPIO_WritePin(HEATER_GPIO_PORT, HEATER_PIN, GPIO_PIN_RESET); // OFF by default
+    GPIO_InitTypeDef heater_cfg = {0};
+    heater_cfg.Pin = HEATER_PIN;
+    heater_cfg.Mode = GPIO_MODE_OUTPUT_PP;
+    heater_cfg.Pull = GPIO_NOPULL;
+    heater_cfg.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(HEATER_GPIO_PORT, &heater_cfg);
 }
 
 void rc_tm1637dp_start(void) {
@@ -97,13 +108,16 @@ float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
     return 36.0f;
 }
 
-static bool dummy;
+static bool heater_switched_on = false;
+
 void rc_heater_set(const bool on) {
-    dummy = on;
+    HAL_GPIO_WritePin(HEATER_GPIO_PORT, HEATER_PIN,
+        ((heater_switched_on = on)) ? GPIO_PIN_SET : GPIO_PIN_RESET
+    );
 }
 
 bool rc_heater_is_on(void) {
-    return dummy;
+    return heater_switched_on;
 }
 
 uint32_t rc_time_current_millis(void) {

@@ -21,7 +21,7 @@ void rc_init_rchal(void) {
     printf("Q=SELECT W=CANCEL E=OPTIONS R=INCR T=DECR\n");
 }
 
-void rc_buzzer_play(void) {
+void rc_buzzer_set(bool on) {
 
 }
 
