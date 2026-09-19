@@ -17,12 +17,8 @@ static void create_app_threads() {
 }
 
 void platform_main(void) {
-    platform_init_primitives(); // init GPIO and shit
-    rc_init_rchal(); // init RCHAL
-    display_normalize_segments();
-
-    ricecooker_init(); // init rice
-
+    display_normalize_segments(); // prevent ghosting
+    ricecooker_init(); // init application
     create_app_threads(); // create RTOS threads
     platform_start_xthreads_sched(); // init scheduler
 }

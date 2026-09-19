@@ -1,4 +1,5 @@
 #include "include/rchal.h"
+#include "include/platform.h"
 #include "stm32f1xx_hal.h"
 #include "include/cmath.h"
 #include "microtime.h"
@@ -79,10 +80,14 @@ void rc_init_rchal(void) {
     adc1_handle.Init.ExternalTrigConv = ADC_SOFTWARE_START;
     adc1_handle.Init.DataAlign = ADC_DATAALIGN_RIGHT;
     adc1_handle.Init.NbrOfConversion = 1;
-    HAL_ADC_Init(&adc1_handle);
+    if (HAL_ADC_Init(&adc1_handle) != HAL_OK) {
+        platform_on_error(HAL_INIT_GPIO_ANALOG);
+    }
 
     // ADC self-calibration
-    HAL_ADCEx_Calibration_Start(&adc1_handle);
+    if (HAL_ADCEx_Calibration_Start(&adc1_handle) != HAL_OK) {
+        platform_on_error(HAL_INIT_GPIO_ANALOG);
+    }
 }
 
 void rc_tm1637dp_start(void) {

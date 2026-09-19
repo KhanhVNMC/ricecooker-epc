@@ -1,38 +1,8 @@
 #include "include/platform.h"
+#include "include/rchal.h"
 #include "stm32f1xx_hal.h"
 #include "microtime.h"
-
-// this setups necessary oscillator and sysclock inside the mcu
-void stm32_clock_init(void) {
-    // this configs the clock generating hardware (oscillator)
-    RCC_OscInitTypeDef oscillator = {0};
-    oscillator.OscillatorType = RCC_OSCILLATORTYPE_HSI; // HIGH SPEED INTERNAL oscil
-    oscillator.HSIState = RCC_HSI_ON;
-    oscillator.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
-    oscillator.PLL.PLLState = RCC_PLL_NONE;
-
-    if (HAL_RCC_OscConfig(&oscillator) != HAL_OK) {
-        platform_on_error(HAL_INIT_OSCILLATOR);
-    }
-
-    // this configs the receiving end of the oscillator (where it goes)
-    RCC_ClkInitTypeDef clocks = {0};
-    clocks.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
-    clocks.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-    clocks.AHBCLKDivider = RCC_SYSCLK_DIV1;
-    clocks.APB1CLKDivider = RCC_HCLK_DIV1;
-    clocks.APB2CLKDivider = RCC_HCLK_DIV1;
-
-    if (HAL_RCC_ClockConfig(&clocks, FLASH_LATENCY_0) != HAL_OK) {
-        platform_on_error(HAL_INIT_SYSCLK);
-    }
-}
-
-// called to setup necessary platform bullshit
-void platform_init_primitives(void) {
-    stm32_clock_init();
-    mt_us_timer_init();
-}
+#include "include/tm1637dv.h"
 
 // called when there's an unrecoverable error
 void platform_on_error(const platform_error_t) {
@@ -46,9 +16,47 @@ void HAL_MspInit(void) {
     __HAL_RCC_PWR_CLK_ENABLE();
 }
 
+// this setups necessary oscillator and sysclock inside the mcu
+static void stm32_clock_init(void) {
+    // this configs the clock generating hardware (oscillator)
+    RCC_OscInitTypeDef oscillator = {0};
+    oscillator.OscillatorType = RCC_OSCILLATORTYPE_HSE; // HIGH SPEED EXTERNAL oscil
+    oscillator.HSEState = RCC_HSE_ON;
+    oscillator.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+
+    oscillator.PLL.PLLState = RCC_PLL_ON;
+    oscillator.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+    oscillator.PLL.PLLMUL = RCC_PLL_MUL9; // 8 * 9 = 72 mhz
+
+    if (HAL_RCC_OscConfig(&oscillator) != HAL_OK) {
+        platform_on_error(HAL_INIT_OSCILLATOR);
+    }
+
+    // this configs the receiving end of the oscillator (where it goes)
+    RCC_ClkInitTypeDef clocks = {0};
+    clocks.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+    clocks.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK; // 72mhz
+
+    clocks.AHBCLKDivider = RCC_SYSCLK_DIV1; // HCLCK | cpu, ram, etc: 72/1 = 72mhz
+    clocks.APB1CLKDivider = RCC_HCLK_DIV2; // PCLK1 | TIM2, tim4 etc: 72/2 = 36mhz
+    clocks.APB2CLKDivider = RCC_HCLK_DIV1; // PCLK2 | ADC1, etc: 72mhz
+
+    if (HAL_RCC_ClockConfig(&clocks, FLASH_LATENCY_2) != HAL_OK) {
+        platform_on_error(HAL_INIT_SYSCLK);
+    }
+}
+
+// called to setup necessary platform bullshit
+static void platform_init_primitives(void) {
+    HAL_Init(); // HAL
+    stm32_clock_init(); // osil and PLL
+    mt_us_timer_init(); // us timer
+    rc_init_rchal(); // rice cooker hal
+}
+
 // global entrypoint
 int main(void) {
-    HAL_Init();
+    platform_init_primitives();
     platform_main(); // this should NEVER return
     platform_on_error(APPLICATION_INIT);
 }

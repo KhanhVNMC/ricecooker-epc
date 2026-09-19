@@ -6,12 +6,12 @@ typedef enum : uint8_t {
     HAL_INIT_OSCILLATOR,
     HAL_INIT_SYSCLK,
     HAL_INIT_US_SLEEP,
+    HAL_INIT_GPIO_ANALOG,
     APPLICATION_INIT,
     SCHEDULER_INIT,
 } platform_error_t;
 
 // bootstrap
-void platform_init_primitives(void);
 void platform_start_xthreads_sched(void);
 
 // entrypoint

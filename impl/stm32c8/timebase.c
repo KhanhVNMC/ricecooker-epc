@@ -11,18 +11,18 @@ HAL_StatusTypeDef HAL_InitTick(const uint32_t TickPriority) {
     __HAL_RCC_TIM4_CLK_ENABLE(); // enable the TIM4 clock so it clocks (wtf am i saying)
 
     // this finds the input clock of TIM4 so we can scale it down correctly
-    // i should've hardcoded it but well we could swap hardware at last minute so
+    // i should've hardcoded it but well
     RCC_ClkInitTypeDef clocks;
     uint32_t ignored; HAL_RCC_GetClockConfig(&clocks, &ignored);
-    uint32_t timer_clock = HAL_RCC_GetPCLK1Freq();
+    uint32_t tim4_clock = HAL_RCC_GetPCLK1Freq();
     if (clocks.APB1CLKDivider != RCC_HCLK_DIV1) {
-        timer_clock *= 2U; // no idea why
+        tim4_clock *= 2U; // there's a clock multplier in between PCLK and TIM4
     }
 
     tim4_tick_timer.Instance = TIM4;
     // suppose the device runs at 72mhz, the prescaler basically pulls this down to 72mhz/72 = 1mhz
     // increments up every microsec
-    tim4_tick_timer.Init.Prescaler = (timer_clock / 1000000U) - 1U; // the prescaler + 1 before dividing, somehow, so -1 to compensate
+    tim4_tick_timer.Init.Prescaler = (tim4_clock / 1000000U) - 1U; // the prescaler + 1 before dividing, somehow, so -1 to compensate
     tim4_tick_timer.Init.CounterMode = TIM_COUNTERMODE_UP; // count up
     tim4_tick_timer.Init.Period = 1000U - 1U; // wraps every 1ms (this pokes the cpu since _IT)
 
@@ -63,15 +63,15 @@ void mt_us_timer_init(void) {
 
     RCC_ClkInitTypeDef clocks;
     uint32_t ignored; HAL_RCC_GetClockConfig(&clocks, &ignored);
-    uint32_t timer_clock = HAL_RCC_GetPCLK1Freq();
+    uint32_t tim2_clock = HAL_RCC_GetPCLK1Freq();
     if (clocks.APB1CLKDivider != RCC_HCLK_DIV1) {
-        timer_clock *= 2U; // no idea why
+        tim2_clock *= 2U; // there's a clock multplier in between PCLK and TIM2
     }
 
     tim2_us_timer.Instance = TIM2;
-    // suppose the device runs at 72mhz, the prescaler basically pulls this down to 72mhz/72 = 1mhz
+    // suppose the TIM2 runs at 72mhz, the prescaler basically pulls this down to 72mhz/72 = 1mhz
     // increments up every microsec
-    tim2_us_timer.Init.Prescaler = (timer_clock / 1000000U) - 1U; // the prescaler + 1 before dividing, somehow, so -1 to compensate
+    tim2_us_timer.Init.Prescaler = (tim2_clock / 1000000U) - 1U; // the prescaler + 1 before dividing, somehow, so -1 to compensate
     tim2_us_timer.Init.CounterMode = TIM_COUNTERMODE_UP; // count up
     tim2_us_timer.Init.Period = 0xFFFFU;
 
