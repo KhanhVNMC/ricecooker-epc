@@ -429,7 +429,7 @@ void begin_task_delayed_countdown(void) {
     app_state = STATE_DELAYED_COUNTDOWN;
 }
 
-void watchdog_platform_tick(const uint32_t current_time) {
+static void watchdog_platform_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 1x)
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
