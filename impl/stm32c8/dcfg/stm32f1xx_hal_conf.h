@@ -1,6 +1,7 @@
 #ifndef STM32F1XX_HAL_CONF_H
 #define STM32F1XX_HAL_CONF_H
 
+#define HAL_PCD_MODULE_ENABLED
 #define HAL_ADC_MODULE_ENABLED
 #define HAL_MODULE_ENABLED
 #define HAL_CORTEX_MODULE_ENABLED
@@ -65,6 +66,9 @@
 #include "stm32f1xx_hal_tim.h"
 #ifdef HAL_ADC_MODULE_ENABLED
 #include "stm32f1xx_hal_adc.h"
+#endif
+#ifdef HAL_PCD_MODULE_ENABLED
+#include "stm32f1xx_hal_pcd.h"
 #endif
 
 #ifdef USE_FULL_ASSERT

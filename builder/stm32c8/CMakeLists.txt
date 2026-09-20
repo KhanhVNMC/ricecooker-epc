@@ -50,6 +50,7 @@ target_include_directories(ricecooker_stm32c8 PRIVATE "${STM32_PLATFORM_DIR}")
 target_link_libraries(ricecooker_stm32c8 PRIVATE
     ricecooker_core
     stm32::hal
+    stm32::usb_lib
     freertos_kernel
     m
 )

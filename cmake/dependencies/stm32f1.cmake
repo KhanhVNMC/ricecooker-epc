@@ -7,19 +7,29 @@ FetchContent_Declare(cmsis_core
     GIT_REPOSITORY https://github.com/STMicroelectronics/cmsis-core.git
     GIT_TAG v5.4.0_cm3
     GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
 )
 FetchContent_Declare(cmsis_device_f1
     GIT_REPOSITORY https://github.com/STMicroelectronics/cmsis-device-f1.git
     GIT_TAG v4.3.3
     GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
 )
 FetchContent_Declare(stm32f1_hal
     GIT_REPOSITORY https://github.com/STMicroelectronics/stm32f1xx-hal-driver.git
     GIT_TAG v1.1.8
     GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
+)
+FetchContent_Declare(
+    stm32_usb_device
+    GIT_REPOSITORY https://github.com/STMicroelectronics/stm32-mw-usb-device.git
+    GIT_TAG v2.11.5
+    GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
 )
 
-FetchContent_MakeAvailable(cmsis_core cmsis_device_f1 stm32f1_hal)
+FetchContent_MakeAvailable(cmsis_core cmsis_device_f1 stm32f1_hal stm32_usb_device)
 
 add_library(stm32_cmsis_core INTERFACE)
 add_library(stm32::cmsis_core ALIAS stm32_cmsis_core)
@@ -48,14 +58,32 @@ add_library(stm32_hal STATIC
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_tim_ex.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_adc.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_adc_ex.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_pcd.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_pcd_ex.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_ll_usb.c"
 )
 add_library(stm32::hal ALIAS stm32_hal)
+
+add_library(stm32_usb_device_lib STATIC
+    "${stm32_usb_device_SOURCE_DIR}/Core/Src/usbd_core.c"
+    "${stm32_usb_device_SOURCE_DIR}/Core/Src/usbd_ctlreq.c"
+    "${stm32_usb_device_SOURCE_DIR}/Core/Src/usbd_ioreq.c"
+    "${stm32_usb_device_SOURCE_DIR}/Class/CDC/Src/usbd_cdc.c"
+)
+add_library(stm32::usb_lib ALIAS stm32_usb_device_lib)
+target_link_libraries(stm32_usb_device_lib PUBLIC stm32::hal)
+
 target_link_libraries(stm32_hal PUBLIC stm32::cmsis_device)
 target_include_directories(stm32_hal
     PUBLIC
         "${STM32_DEVICES_CONFIG_DIR}"
         "${stm32f1_hal_SOURCE_DIR}/Inc"
         "${stm32f1_hal_SOURCE_DIR}/Inc/Legacy"
+)
+target_include_directories(stm32_usb_device_lib
+    PUBLIC
+        "${stm32_usb_device_SOURCE_DIR}/Core/Inc"
+        "${stm32_usb_device_SOURCE_DIR}/Class/CDC/Inc"
 )
 target_compile_definitions(stm32_hal PUBLIC USE_HAL_DRIVER STM32F103xB)
 
@@ -65,6 +93,7 @@ FetchContent_Declare(freertos_kernel
     GIT_REPOSITORY https://github.com/FreeRTOS/FreeRTOS-Kernel.git
     GIT_TAG V11.1.0
     GIT_SHALLOW TRUE
+    GIT_PROGRESS TRUE
 )
 FetchContent_MakeAvailable(freertos_kernel)
 target_link_libraries(freertos_config INTERFACE stm32::cmsis_device)

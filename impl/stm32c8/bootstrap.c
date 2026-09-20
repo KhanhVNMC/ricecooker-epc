@@ -39,9 +39,19 @@ static void stm32_clock_init(void) {
 
     clocks.AHBCLKDivider = RCC_SYSCLK_DIV1; // HCLCK | cpu, ram, etc: 72/1 = 72mhz
     clocks.APB1CLKDivider = RCC_HCLK_DIV2; // PCLK1 | TIM2, tim4 etc: 72/2 = 36mhz
-    clocks.APB2CLKDivider = RCC_HCLK_DIV1; // PCLK2 | ADC1, etc: 72mhz
+    clocks.APB2CLKDivider = RCC_HCLK_DIV1; // PCLK2 | ADC1, USB etc: 72mhz
 
     if (HAL_RCC_ClockConfig(&clocks, FLASH_LATENCY_2) != HAL_OK) {
+        platform_on_error(HAL_INIT_SYSCLK);
+    }
+
+    // this configure the downstream consumer of APB2
+    RCC_PeriphCLKInitTypeDef periph = {0};
+    periph.PeriphClockSelection = RCC_PERIPHCLK_ADC | RCC_PERIPHCLK_USB;
+    periph.AdcClockSelection = RCC_ADCPCLK2_DIV6; // ADC1 can only run at 12mhz
+    periph.UsbClockSelection = RCC_USBCLKSOURCE_PLL_DIV1_5; // USB runs at 48mhz
+
+    if (HAL_RCCEx_PeriphCLKConfig(&periph) != HAL_OK) {
         platform_on_error(HAL_INIT_SYSCLK);
     }
 }
