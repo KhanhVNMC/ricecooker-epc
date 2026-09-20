@@ -7,29 +7,18 @@ static PCD_HandleTypeDef usb_pcd; // actual STM32 USB peripheral state
 static uint8_t rx_buffer[CDC_DATA_FS_MAX_PACKET_SIZE]; // USB FS bulk packet = max 64 bytes
 static uint8_t tx_buffer[256]; // TX staging buf
 
+// USB device description bullshit
+static uint8_t usb_string_buf[USBD_MAX_STR_DESC_SIZ];
 static uint8_t usb_device_desc[USB_LEN_DEV_DESC] = {
     0x12, USB_DESC_TYPE_DEVICE,
-    0x00, 0x02,
+    0x00, 0x02, // usb 2.0
     0x02, 0x00, 0x00,
     USB_MAX_EP0_SIZE,
-    0x34, 0x12,                 // VID
-    0x78, 0x56,                 // PID
+    0x36, 0x36, // Vendor ID = 3636
+    0x18, 0x18, // Product ID = 1818
     0x00, 0x01,
-    0, 0, 0,                    // FUCK STRINGS
+    USBD_IDX_MFC_STR, USBD_IDX_PRODUCT_STR, 0, // desc indx
     1
-};
-
-static uint8_t *usb_get_device_descriptor(
-    USBD_SpeedTypeDef speed,
-    uint16_t *length)
-{
-    (void)speed;
-    *length = sizeof usb_device_desc;
-    return usb_device_desc;
-}
-
-static USBD_DescriptorsTypeDef usb_descriptors = {
-    .GetDeviceDescriptor = usb_get_device_descriptor,
 };
 
 /////////// THIS IS GENERIC STM32 USB CODE, IM NOT GONNA EVEN PRETEND TO UNDERSTAND ALL OF  IT ///////////
@@ -200,6 +189,8 @@ static int8_t cdc_receive(uint8_t *buffer, uint32_t *length_ptr) {
     return USBD_OK;
 }
 
+// this function will make the usb not NAK inbound packets anymore
+// and actually receive it and put it in rx buf
 void ecc_next_read_ready(void) {
     USBD_CDC_SetRxBuffer(&usb_device, rx_buffer); // tell CDC where inc rx go
     USBD_CDC_ReceivePacket(&usb_device); // arm the OUT endpoint
@@ -211,6 +202,28 @@ static USBD_CDC_ItfTypeDef cdc_callback_funcs = {
     .Control = cdc_control,
     .Receive = cdc_receive,
     .TransmitCplt = cdc_tx_complete,
+};
+
+// this configures what the usb report as
+static uint8_t* usb_get_device_descriptor(const USBD_SpeedTypeDef, uint16_t *length) {
+    *length = sizeof usb_device_desc;
+    return usb_device_desc;
+}
+
+static uint8_t* usb_get_manufacturer_string(USBD_SpeedTypeDef, uint16_t *length) {
+    USBD_GetString((uint8_t*) "Nha may Z111", usb_string_buf, length);
+    return usb_string_buf;
+}
+
+static uint8_t* usb_get_product_string(USBD_SpeedTypeDef, uint16_t *length) {
+    USBD_GetString((uint8_t*) "Noi Ninh Dam", usb_string_buf, length);
+    return usb_string_buf;
+}
+
+static USBD_DescriptorsTypeDef usb_descriptors = {
+    .GetDeviceDescriptor = usb_get_device_descriptor,
+    .GetManufacturerStrDescriptor = usb_get_manufacturer_string,
+    .GetProductStrDescriptor = usb_get_product_string,
 };
 
 static bool usb_initialized = false;

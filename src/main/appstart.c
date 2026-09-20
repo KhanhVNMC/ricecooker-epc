@@ -13,7 +13,7 @@ static xthread_handle_t *BUZZER_UPDATE_THREAD;
 static void create_app_threads() {
     HEATER_UPDATE_THREAD = xthreads_new(task_heater_update_thread, nullptr, OBERSTER_FUHRER_DER_SS, "Adolf Heater");
     MAIN_APP_THREAD = xthreads_new(task_main_app_thread, nullptr, SS_OBERFUHRER, "Hermainn Goring"); // close enough
-    BUZZER_UPDATE_THREAD = xthreads_new(task_buzzer_update_thread, nullptr, SS_STANDARTENFUHRER, "Joachim Buzzer");
+    BUZZER_UPDATE_THREAD = xthreads_new(task_buzzer_update_thread, nullptr, SS_STANDARTENFUHRER, "Joachim Peeper"); // beep beep
 }
 
 void platform_main(void) {

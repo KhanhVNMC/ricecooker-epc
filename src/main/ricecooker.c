@@ -486,6 +486,8 @@ void on_platform_tick(void) {
             reset_app_state(STATE_IDLE);
         } else if (cmd_type == 0xF) {
             app_on_btns_press(payload[0]);
+        } else if (cmd_type == 0x36u) {
+            lrcmdctl_ob_send(0x18, payload, size);
         }
 
         lrcmdctl_ib_release();
