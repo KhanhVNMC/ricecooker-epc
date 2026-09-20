@@ -22,8 +22,8 @@ void* usbd_static_mem_dmalloc(uint32_t size);
 void  usbd_static_mem_dfree(void*);
 
 // USBD needed macros
-#define USBD_malloc     USBD_static_malloc
-#define USBD_free       USBD_static_free
+#define USBD_malloc     usbd_static_mem_dmalloc
+#define USBD_free       usbd_static_mem_dfree
 #define USBD_memset     memset
 #define USBD_memcpy     memcpy
 #define USBD_Delay      HAL_Delay

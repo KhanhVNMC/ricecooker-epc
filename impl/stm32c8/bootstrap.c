@@ -1,8 +1,8 @@
 #include "include/platform.h"
 #include "include/rchal.h"
+#include "include/ecclayer.h"
 #include "stm32f1xx_hal.h"
 #include "microtime.h"
-#include "include/tm1637dv.h"
 
 // called when there's an unrecoverable error
 void platform_on_error(const platform_error_t) {
@@ -62,6 +62,7 @@ static void platform_init_primitives(void) {
     stm32_clock_init(); // osil and PLL
     mt_us_timer_init(); // us timer
     rc_init_rchal(); // rice cooker hal
+    ecc_init_stack();
 }
 
 // global entrypoint

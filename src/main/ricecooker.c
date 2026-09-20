@@ -1,13 +1,13 @@
 #include "tempstats.h"
 #include "ricecooker.h"
 #include "cooking_profile.h"
-
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 #include "include/buzzerctl.h"
+#include "include/lrcmdctl.h"
 
 #define APP_MAIN_INTERVAL           (10)
 #define APP_BLINK_INTERVAL          (500u)
@@ -475,6 +475,21 @@ void on_platform_tick(void) {
     }
     // update output
     update_rc_display();
+    // process packets
+    if (lrcmdctl_ib_has_pending()) {
+        const uint8_t cmd_type = lrcmdctl_ib_get_cmd_type();
+        const uint8_t *payload = lrcmdctl_ib_get_payload();
+        const uint16_t size = lrcmdctl_ib_payload_size();
+
+        // TODO make dispatching proper way
+        if (cmd_type == 0x0) {
+            reset_app_state(STATE_IDLE);
+        } else if (cmd_type == 0xF) {
+            app_on_btns_press(payload[0]);
+        }
+
+        lrcmdctl_ib_release();
+    }
 }
 
 // TODO MAKE THIS WORK PROPERLY
