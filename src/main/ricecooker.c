@@ -1,5 +1,6 @@
 #include "tempstats.h"
 #include "ricecooker.h"
+#include "cooking_profile.h"
 
 #include "include/cmath.h"
 #include "include/rchal.h"
@@ -85,6 +86,11 @@ static uint32_t timestamp_delayed_start;
 static uint32_t timestamp_pot_temp_display_start; // cosmetic
 static uint32_t timestamp_tempstats_last_sample; // temp sample
 
+// thermal cooking profile tracking
+static const cooking_profile_t *active_profile = nullptr;
+static uint8_t  active_stage_idx = 0;
+static uint32_t timestamp_stage_start = 0;
+
 // masks & shit
 static bitmask8_t last_input_mask = 0;
 
@@ -127,6 +133,9 @@ void reset_app_state(const app_state_t reset_to) {
     timestamp_delayed_start = 0;
     timestamp_pot_temp_display_start = 0;
     timestamp_tempstats_last_sample = 0;
+    active_profile = nullptr;
+    active_stage_idx = 0;
+    timestamp_stage_start = 0;
 }
 
 void app_on_btns_press(const bitmask8_t pressed) {
@@ -423,7 +432,6 @@ void task_main_app_thread(void *args) {
     }
 }
 
-///// BUSINESS LOGIC LAYER /////
 void begin_task_delayed_countdown(void) {
     timestamp_delayed_start = rc_time_current_millis();
     app_state = STATE_DELAYED_COUNTDOWN;
@@ -472,20 +480,114 @@ void on_platform_tick(void) {
 // TODO MAKE THIS WORK PROPERLY
 void begin_task_cooking(void) {
     timestamp_cook_start = rc_time_current_millis();
+    timestamp_stage_start = timestamp_cook_start;
+    active_stage_idx = 0;
     app_state = STATE_COOKING;
-    // TODO THIS IS JUST TEST CODE
-    heater_set_target_pot_temp(100.f);
-    heater_set_enabled(true);
+
+    if (cooking_mode == MODE_MANUAL_USER) {
+        active_profile = nullptr;
+        heater_set_target_pot_temp((float)manual_mode_temp);
+        heater_set_enabled(true);
+    } else {
+        active_profile = cooking_get_profile(cooking_mode);
+        if (active_profile != nullptr && active_profile->stage_count > 0) {
+            heater_set_target_pot_temp(active_profile->stages[0].target_pot_temp);
+            heater_set_enabled(true);
+        } else {
+            // TODO THIS IS JUST TEST CODE
+            // Fall back
+            heater_set_target_pot_temp(100.f);
+            heater_set_enabled(true);
+        }
+    }
 }
 
 // TODO MAKE THIS WORK PROPERLY
 void on_cooking_pltick(const uint32_t current_time) {
     // TODO impl here
+    if (app_state == STATE_HOLD_WARM) {
+        heater_set_target_pot_temp(65.0f);
+        heater_set_enabled(true);
+        return;
+    }
+
+    if (cooking_mode == MODE_MANUAL_USER) {
+        const uint32_t duration_ms = (uint32_t)manual_mode_time_mins * 60u * 1000u;
+        if (current_time - timestamp_cook_start >= duration_ms) {
+            on_cooking_complete();
+        }
+        return;
+    }
+
+    if (active_profile == nullptr || active_profile->stage_count == 0) {
+        return;
+    }
+
+    const cooking_stage_t *curr_stage = &active_profile->stages[active_stage_idx];
+    const uint32_t stage_elapsed_ms = current_time - timestamp_stage_start;
+    const float pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
+    bool advance_stage = false;
+
+    switch (curr_stage->trigger_type) {
+        case TRIGGER_TIME_EXPIRED: {
+            if (stage_elapsed_ms >= curr_stage->duration_ms) {
+                advance_stage = true;
+            }
+            break;
+        }
+        case TRIGGER_POT_TEMP_REACHED: {
+            if (pot_temp >= curr_stage->temp_threshold || stage_elapsed_ms >= curr_stage->duration_ms) {
+                advance_stage = true;
+            }
+            break;
+        }
+        case TRIGGER_WATER_BOIL_DRY: {
+            // high temperature (have no water left)
+            // high slope during 5 mins
+            // timeout
+            const float slope = tempstats_linreg_slope();
+            const bool min_boil_time_met = stage_elapsed_ms >= 5u * 60u * 1000u;
+            if (pot_temp >= curr_stage->temp_threshold ||
+                (min_boil_time_met && slope >= 0.25f && pot_temp >= 100.0f) ||
+                stage_elapsed_ms >= curr_stage->duration_ms) {
+                advance_stage = true;
+            }
+            break;
+        }
+    }
+
+    if (advance_stage) {
+        active_stage_idx++;
+        if (active_stage_idx < active_profile->stage_count) {
+            // the next stage
+            timestamp_stage_start = current_time;
+            heater_set_target_pot_temp(active_profile->stages[active_stage_idx].target_pot_temp);
+        } else {
+            // Done in cooking
+            on_cooking_complete();
+        }
+    }
 }
 
 // TODO MAKE THIS WORK PROPERLY
 void on_cooking_complete(void) {
+    buzzer_play_beep();
 
+    bool auto_warm = true;
+    if (active_profile != nullptr) {
+        auto_warm = active_profile->auto_hold_warm;
+    } else if (cooking_mode == MODE_FLAN_DRE) {
+        auto_warm = false;
+    }
+
+    if (auto_warm) {
+        app_state = STATE_HOLD_WARM;
+        cooking_mode = MODE_HOLD_WARM;
+        heater_set_target_pot_temp(65.0f);
+        heater_set_enabled(true);
+    } else {
+        reset_app_state(STATE_IDLE);
+    }
 }
 
 ///// INIT SHIT /////
