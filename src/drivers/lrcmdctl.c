@@ -43,12 +43,15 @@ ecc_rx_result_t ecc_on_rx_data(const uint8_t *data, const uint32_t len) {
         }
         // the semantic requires data to not be like this:
         // YES: [int16][int8][payload]              +1000 social credit
-        // NO:  [int16][int8][payload][int16][int8]  -1000 social credit, execution tmr
+        // NO:  [int16][int8][payload][int16][int8] -1000 social credit, execution tmr
     }
     return ECC_RX_PARTIAL;
 }
 
 bool lrcmdctl_ob_send(const uint8_t cmd_type, const uint8_t *payload, const uint16_t payload_size) {
+    if (!ecc_is_layer_ready()) {
+        return false;
+    }
     // this will just refuse to send if the payload is > 125B
     if (payload_size > MAX_PACKET_SIZE - 3u) {
         return false;
@@ -59,7 +62,9 @@ bool lrcmdctl_ob_send(const uint8_t cmd_type, const uint8_t *payload, const uint
     frame[0] = (uint8_t)(datagram_size >> 8u);
     frame[1] = (uint8_t)(datagram_size & 0xFFu);
     frame[2] = cmd_type;
-    memcpy(&frame[3], payload, payload_size);
+    if (payload_size != 0) {
+        memcpy(&frame[3], payload, payload_size);
+    }
     return ecc_tx_data(frame, datagram_size);
 }
 

@@ -2,6 +2,10 @@
 #define CMDCTL_H
 #include <stdint.h>
 
+typedef enum : uint8_t {
+    CMD_ACK = 0xFF
+} cmd_type_t;
+
 // INBOUND handling
 bool lrcmdctl_ib_has_pending(void);
 uint8_t lrcmdctl_ib_get_cmd_type(void);

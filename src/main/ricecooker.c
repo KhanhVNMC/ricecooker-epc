@@ -1,6 +1,6 @@
 #include "tempstats.h"
 #include "ricecooker.h"
-#include "cooking_profile.h"
+#include "cookingprofile.h"
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
@@ -547,13 +547,13 @@ void on_cooking_pltick(const uint32_t current_time) {
 
     switch (curr_stage->trigger_type) {
         case TRIGGER_TIME_EXPIRED: {
-            if (stage_elapsed_ms >= curr_stage->duration_ms) {
+            if (stage_elapsed_ms >= curr_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
             break;
         }
         case TRIGGER_POT_TEMP_REACHED: {
-            if (pot_temp >= curr_stage->temp_threshold || stage_elapsed_ms >= curr_stage->duration_ms) {
+            if (pot_temp >= curr_stage->temp_threshold || stage_elapsed_ms >= curr_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
             break;
@@ -566,7 +566,7 @@ void on_cooking_pltick(const uint32_t current_time) {
             const bool min_boil_time_met = stage_elapsed_ms >= 5u * 60u * 1000u;
             if (pot_temp >= curr_stage->temp_threshold ||
                 (min_boil_time_met && slope >= 0.25f && pot_temp >= 100.0f) ||
-                stage_elapsed_ms >= curr_stage->duration_ms) {
+                stage_elapsed_ms >= curr_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
             break;
