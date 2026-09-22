@@ -3,8 +3,9 @@
 #include "include/rchal.h"
 
 typedef enum : bitmask8_t {
-    HEATER_OVERHEAT_FAULT = 1 << 0,
-    HEATER_UNDERHEAT_FAULT = 1 << 1,
+    HEATER_ELEMENT_OVERHEAT_FAULT = 1 << 0,
+    HEATER_POT_OVERHEAT_FAULT = 1 << 1,
+    HEATER_UNDERHEAT_FAULT = 1 << 2,
 } heater_faults_t;
 
 void heater_set_target_pot_temp(float temp);

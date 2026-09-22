@@ -9,8 +9,8 @@
 #include "include/buzzerctl.h"
 #include "include/lrcmdctl.h"
 
-#define APP_MAIN_INTERVAL           (10)
-#define APP_BLINK_INTERVAL          (500u)
+#define APP_MAIN_INTERVAL_MS        (10)
+#define APP_BLINK_INTERVAL_MS       (500u)
 #define APP_ANIM_FRAME_FAST_MS      (200u)
 #define APP_ANIM_FRAME_NORMAL_MS    (250u)
 #define APP_ANIM_FRAME_SOFT_MS      (300u)
@@ -259,7 +259,7 @@ void update_rc_display(void) {
             break;
         }
         case STATE_SYSTEM_ERROR: {
-            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u;
+            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL_MS) & 1u;
             // display blinking [ERR:<code>]
             display_set_characters(blink ?
                 (digit_t[4]) {CHAR_E, CHAR_R, system_error_code / 10, system_error_code % 10}
@@ -270,7 +270,7 @@ void update_rc_display(void) {
         case STATE_CF_DELAYED_MODE_SELECT:
         case STATE_MODE_SELECT: {
             display_set_characters(
-                (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u // blink every Xms
+                (rc_time_current_millis() / APP_BLINK_INTERVAL_MS) & 1u // blink every Xms
                 ? mode_to_digits[cooking_mode] : BLANK,
                 (app_state != STATE_MODE_SELECT) // : if delayed
             );
@@ -291,7 +291,7 @@ void update_rc_display(void) {
                 const uint32_t duration_ms = manual_mode_time_mins * 60000u;
                 app_display_countdown(
                     ((timestamp_cook_start + duration_ms) - current_time) / 1000u,
-                    (current_time / APP_BLINK_INTERVAL) & 1u
+                    (current_time / APP_BLINK_INTERVAL_MS) & 1u
                 );
                 break;
             }
@@ -319,7 +319,7 @@ void update_rc_display(void) {
                 const uint32_t duration_ms = delayed_mode_time_mins * 60000u;
                 app_display_countdown(
                     ((timestamp_delayed_start + duration_ms) - current_time) / 1000u,
-                    (current_time / APP_BLINK_INTERVAL) & 1u
+                    (current_time / APP_BLINK_INTERVAL_MS) & 1u
                 );
                 break;
             }
@@ -333,7 +333,7 @@ void update_rc_display(void) {
         }
         case STATE_CF_MANUAL_TIME:
         case STATE_CF_DELAYED_TIME: {
-            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL) & 1u;
+            const bool blink = (rc_time_current_millis() / APP_BLINK_INTERVAL_MS) & 1u;
             const uint32_t time_source_mins = app_state == STATE_CF_MANUAL_TIME
                 ? manual_mode_time_mins : delayed_mode_time_mins
             ;
@@ -429,7 +429,7 @@ void task_main_app_thread(void *args) {
             last_input_mask = current_mask;
         }
         on_platform_tick();
-        xthreads_sleep(APP_MAIN_INTERVAL);
+        xthreads_sleep(APP_MAIN_INTERVAL_MS);
     }
 }
 
@@ -442,15 +442,15 @@ static void watchdog_platform_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 1x)
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
-        system_error_code = 10; // base error code
-        if (hfaults & HEATER_OVERHEAT_FAULT) system_error_code += 5; // code 15
-        if (hfaults & HEATER_UNDERHEAT_FAULT) system_error_code += 4; // code 14 (if both then 19)
+        system_error_code = 20; // base heater error code
+        if (hfaults & HEATER_ELEMENT_OVERHEAT_FAULT) system_error_code += 2; // code 12
+        if (hfaults & HEATER_POT_OVERHEAT_FAULT) system_error_code += 3; // code 13 (if both then 15)
         reset_app_state(STATE_SYSTEM_ERROR);
         return;
     }
     // collect pot temp every second
     if (current_time - timestamp_tempstats_last_sample >= 1000u) {
-        tempstats_collect_sample(rc_sensor_get_temp(RC_SENSOR_HEATER));
+        tempstats_collect_sample(rc_sensor_get_temp(RC_SENSOR_POT));
         timestamp_tempstats_last_sample = current_time;
     }
 }
@@ -476,18 +476,19 @@ void on_platform_tick(void) {
     }
     // update output
     update_rc_display();
-    // process packets
+    // process control datagrams
     if (lrcmdctl_ib_has_pending()) {
-        const cmd_type_t cmd_type = lrcmdctl_ib_get_cmd_type();
-        const uint8_t *payload = lrcmdctl_ib_get_payload();
-        const uint16_t size = lrcmdctl_ib_payload_size();
-        on_cmd_datagram_recv(cmd_type, size, payload);
+        on_cmd_datagram_recv(
+            lrcmdctl_ib_get_cmd_type(),
+            lrcmdctl_ib_payload_size(),
+            lrcmdctl_ib_get_payload()
+        );
         lrcmdctl_ib_release();
     }
 }
 
-void on_cmd_datagram_recv(cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload) {
-    
+void on_cmd_datagram_recv(const cmd_type_t cmd_type, const uint16_t payload_size, const uint8_t *payload) {
+
 }
 
 // TODO MAKE THIS WORK PROPERLY

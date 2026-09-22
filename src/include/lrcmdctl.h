@@ -3,7 +3,7 @@
 #include <stdint.h>
 
 typedef enum : uint8_t {
-    CMD_ACK = 0xFF
+    CMD_ECHO = 0
 } cmd_type_t;
 
 // INBOUND handling
