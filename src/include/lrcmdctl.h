@@ -8,14 +8,14 @@ typedef enum : uint8_t {
 
 // INBOUND handling
 bool lrcmdctl_ib_has_pending(void);
-uint8_t lrcmdctl_ib_get_cmd_type(void);
+cmd_type_t lrcmdctl_ib_get_cmd_type(void);
 uint16_t lrcmdctl_ib_payload_size(void);
 const uint8_t* lrcmdctl_ib_get_payload(void);
 void lrcmdctl_ib_release(void); // allow new packets to come
 
 // OUTBOUND packet send
 bool lrcmdctl_ob_send(
-    uint8_t cmd_type,
+    cmd_type_t cmd_type,
     const uint8_t *payload,
     uint16_t payload_size
 );

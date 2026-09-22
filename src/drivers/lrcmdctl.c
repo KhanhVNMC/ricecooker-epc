@@ -48,7 +48,7 @@ ecc_rx_result_t ecc_on_rx_data(const uint8_t *data, const uint32_t len) {
     return ECC_RX_PARTIAL;
 }
 
-bool lrcmdctl_ob_send(const uint8_t cmd_type, const uint8_t *payload, const uint16_t payload_size) {
+bool lrcmdctl_ob_send(const cmd_type_t cmd_type, const uint8_t *payload, const uint16_t payload_size) {
     if (!ecc_is_layer_ready()) {
         return false;
     }
@@ -73,7 +73,7 @@ bool lrcmdctl_ib_has_pending(void) {
     return packet_ready && ecc_is_layer_ready();
 }
 
-uint8_t lrcmdctl_ib_get_cmd_type(void) {
+cmd_type_t lrcmdctl_ib_get_cmd_type(void) {
     return ib_cmdpkt[2];
 }
 

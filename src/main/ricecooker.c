@@ -102,6 +102,7 @@ void on_cooking_complete(void);
 void on_delayed_countdown_end(void);
 void update_rc_display(void);
 void on_platform_tick(void);
+void on_cmd_datagram_recv(cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload);
 
 // util functions
 static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
@@ -477,21 +478,16 @@ void on_platform_tick(void) {
     update_rc_display();
     // process packets
     if (lrcmdctl_ib_has_pending()) {
-        const uint8_t cmd_type = lrcmdctl_ib_get_cmd_type();
+        const cmd_type_t cmd_type = lrcmdctl_ib_get_cmd_type();
         const uint8_t *payload = lrcmdctl_ib_get_payload();
         const uint16_t size = lrcmdctl_ib_payload_size();
-
-        // TODO make dispatching proper way
-        if (cmd_type == 0x0) {
-            reset_app_state(STATE_IDLE);
-        } else if (cmd_type == 0xF) {
-            app_on_btns_press(payload[0]);
-        } else if (cmd_type == 0x36u) {
-            lrcmdctl_ob_send(0x18, payload, size);
-        }
-
+        on_cmd_datagram_recv(cmd_type, size, payload);
         lrcmdctl_ib_release();
     }
+}
+
+void on_cmd_datagram_recv(cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload) {
+    
 }
 
 // TODO MAKE THIS WORK PROPERLY
