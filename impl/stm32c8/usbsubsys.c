@@ -14,11 +14,16 @@ static uint8_t usb_device_desc[USB_LEN_DEV_DESC] = {
     0x00, 0x02, // usb 2.0
     0x02, 0x00, 0x00,
     USB_MAX_EP0_SIZE,
-    0x36, 0x36, // Vendor ID = 3636
-    0x18, 0x18, // Product ID = 1818
+    0x36, 0x18, // Vendor ID = 1836
+    0x36, 0x36, // Product ID = 3636
     0x00, 0x01,
     USBD_IDX_MFC_STR, USBD_IDX_PRODUCT_STR, 0, // desc indx
     1
+};
+static uint8_t usb_lang_id_desc[4] = {
+    0x04, // bLength (4 bytes)
+    USB_DESC_TYPE_STRING, // bDescriptorType (0x03)
+    0x09, 0x40 // english
 };
 
 /////////// THIS IS GENERIC STM32 USB CODE, IM NOT GONNA EVEN PRETEND TO UNDERSTAND ALL OF  IT ///////////
@@ -210,6 +215,12 @@ static uint8_t* usb_get_device_descriptor(const USBD_SpeedTypeDef, uint16_t *len
     return usb_device_desc;
 }
 
+static uint8_t* usb_get_lang_id_descriptor(USBD_SpeedTypeDef speed, uint16_t *length) {
+    (void)speed;
+    *length = sizeof(usb_lang_id_desc);
+    return usb_lang_id_desc;
+}
+
 static uint8_t* usb_get_manufacturer_string(USBD_SpeedTypeDef, uint16_t *length) {
     USBD_GetString((uint8_t*) "Nha may Z111", usb_string_buf, length);
     return usb_string_buf;
@@ -222,6 +233,7 @@ static uint8_t* usb_get_product_string(USBD_SpeedTypeDef, uint16_t *length) {
 
 static USBD_DescriptorsTypeDef usb_descriptors = {
     .GetDeviceDescriptor = usb_get_device_descriptor,
+    .GetLangIDStrDescriptor = usb_get_lang_id_descriptor,
     .GetManufacturerStrDescriptor = usb_get_manufacturer_string,
     .GetProductStrDescriptor = usb_get_product_string,
 };
