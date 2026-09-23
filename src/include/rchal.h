@@ -26,6 +26,8 @@ void rc_tm1637dp_stop(void);
 
 void rc_buzzer_set(bool on);
 
+void rc_dbg_led_set(bool on);
+
 float rc_sensor_get_temp(rc_temp_sensor_t sensor);
 
 bitmask8_t rc_buttons_get_state(void);

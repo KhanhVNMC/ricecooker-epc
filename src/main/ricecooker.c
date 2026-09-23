@@ -488,10 +488,20 @@ void on_platform_tick(void) {
 }
 
 void on_cmd_datagram_recv(const cmd_type_t cmd_type, const uint16_t payload_size, const uint8_t *payload) {
+    // TODO test code
     if (cmd_type == 0x36) {
         const uint16_t summation = (payload[0] << 8 | payload[1]) + (payload[2] << 8 | payload[3]);
-        const uint8_t result[4] = { summation << 24, summation << 16, summation << 8, summation & 0xFF };
+        const uint8_t result[4] = {
+            (summation >> 24) & 0xFF, (summation >> 16) & 0xFF, (summation >> 8) & 0xFF, summation & 0xFF
+        };
         lrcmdctl_ob_send(0x18, result, 4);
+        return;
+    }
+
+    if (cmd_type == 0xAB) {
+        rc_dbg_led_set(payload[0] != 0);
+        lrcmdctl_ob_send(0x33, (uint8_t[1]) {payload[0] != 0 ? 0x36 : 0x18}, 1);
+        return;
     }
 }
 

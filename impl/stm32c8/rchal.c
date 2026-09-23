@@ -22,6 +22,9 @@
 #define BUZZER_GPIO_PORT    GPIOB
 #define BUZZER_PIN          GPIO_PIN_9
 
+#define DBG_LED_GPIO_PORT   GPIOC
+#define DBG_LED_PIN         GPIO_PIN_13
+
 #define NTC_R_REF           (10000.0f)
 #define NTC_R0              (100000.0f)
 #define NTC_TO_KELVIN       (298.15f)
@@ -32,9 +35,10 @@ static ADC_HandleTypeDef adc1_handle;
 static bool heater_switched_on = false;
 
 void rc_init_rchal(void) {
-    // enable ports (we use B for now)
+    // enable ports and ADCs
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
+    __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE(); // ADC pins
 
     // TM1637 DIO/CLK pins config
@@ -46,7 +50,7 @@ void rc_init_rchal(void) {
     tm1637_pins_conf.Pin = TM1637_CLK_PIN | TM1637_DIO_PIN;
     HAL_GPIO_Init(TM1637_GPIO_PORT, &tm1637_pins_conf);
 
-    // BUZZER pín config
+    // BUZZER pin config
     HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET); // muted by default
     GPIO_InitTypeDef buzzer_conf = {0}; // now can config
     buzzer_conf.Pin = BUZZER_PIN;
@@ -55,7 +59,16 @@ void rc_init_rchal(void) {
     buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW; // 2MHz
     HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
 
-    // heating element pín config
+    // LED pin config (this is low-active, so SET == off)
+    HAL_GPIO_WritePin(DBG_LED_GPIO_PORT, DBG_LED_PIN, GPIO_PIN_SET); // off by default
+    GPIO_InitTypeDef dbgled_conf = {0}; // now can config
+    dbgled_conf.Pin = DBG_LED_PIN;
+    dbgled_conf.Mode = GPIO_MODE_OUTPUT_PP;
+    dbgled_conf.Pull = GPIO_NOPULL;
+    dbgled_conf.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(DBG_LED_GPIO_PORT, &dbgled_conf);
+
+    // heating element pins config
     HAL_GPIO_WritePin(HEATER_GPIO_PORT, HEATER_PIN, GPIO_PIN_RESET); // OFF by default
     GPIO_InitTypeDef heater_cfg = {0};
     heater_cfg.Pin = HEATER_PIN;
@@ -140,6 +153,10 @@ bitmask8_t rc_buttons_get_state(void) {
 
 void rc_buzzer_set(const bool on) {
     HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
+}
+
+void rc_dbg_led_set(const bool on) {
+    HAL_GPIO_WritePin(DBG_LED_GPIO_PORT, DBG_LED_PIN, on ? GPIO_PIN_RESET : GPIO_PIN_SET);
 }
 
 static uint16_t adc_read_channel(const uint32_t channel) {
