@@ -2,16 +2,16 @@
 #include "include/cmath.h"
 #include "include/xthreads.h"
 
-#define HEATER_POT_SAFETY_CEILING           (250) // deg C
-#define HEATER_ELEMENT_SAFETY_CEILING       (140)
+#define HEATER_ELEMENT_SAFETY_CEILING       (250)
+#define HEATER_POT_SAFETY_CEILING           (140) // deg C
 
-#define HEATER_WATCHDOG_MAX_DROP            (10)
+#define WD_COUPLING_DIVERGENCE_THRES        (15) // what the f is this name
 
 #define ALLOWED_POT_MIN_TEMP                (-10.f)
 #define ALLOWED_POT_MAX_TEMP                (250.f)
 #define THERMISTOR_HEADROOM                 (4.f)
 
-#define HEATER_WATCHDOG_INTERVAL_MS         (5600)
+#define HEATER_WATCHDOG_INTERVAL_MS         (5000)
 #define HEATERCTL_INTERVAL_MS               (50) // ms
 
 static heater_faults_t heater_ctl_faults = 0;
@@ -86,10 +86,23 @@ void task_heater_update_thread(void *args) {
 
         // watchdog periodic protection
         if (heater_currently_on && current_time - heater_wd_last_timestamp >= HEATER_WATCHDOG_INTERVAL_MS) {
-            const float tmp_heater_delta = heater_tmp - heater_wd_last_elem_tmp;
-            const float tmp_pot_delta = pot_tmp - heater_wd_last_pot_tmp;
+            const float heater_delta = heater_tmp - heater_wd_last_elem_tmp;
+            const float pot_delta = pot_tmp - heater_wd_last_pot_tmp;
 
-            // TODO bomb venezuela
+            if (!heater_should_stop) {
+                // sometimes i want to fucking kill myself
+                // this is just retarded
+                if (heater_delta > WD_COUPLING_DIVERGENCE_THRES
+                    && pot_delta < -WD_COUPLING_DIVERGENCE_THRES
+                ) {
+                    rc_heater_set(false); // emergency off
+                    critical {
+                        heater_ctl_faults |= HEATER_POOR_CONTACT_FAULT;
+                        heater_element_enabled = false; // just to be sure
+                    }
+                    goto proc_end;
+                }
+            }
 
             // record the last stats
             heater_wd_last_timestamp = current_time;
@@ -99,6 +112,12 @@ void task_heater_update_thread(void *args) {
 
         // headroom to prevent rapid relay clicking
         if (heater_should_start) {
+            // OFF -> ON state transition
+            if (!heater_currently_on) {
+                heater_wd_last_timestamp = current_time;
+                heater_wd_last_elem_tmp = heater_tmp;
+                heater_wd_last_pot_tmp = pot_tmp;
+            }
             rc_heater_set(true);
         } else if (heater_should_stop) {
             rc_heater_set(false);

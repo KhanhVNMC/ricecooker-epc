@@ -443,8 +443,9 @@ static void watchdog_platform_tick(const uint32_t current_time) {
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
         system_error_code = 20; // base heater error code
-        if (hfaults & HEATER_ELEMENT_OVERHEAT_FAULT) system_error_code += 2; // code 12
-        if (hfaults & HEATER_POT_OVERHEAT_FAULT) system_error_code += 3; // code 13 (if both then 15)
+        if (hfaults & HEATER_ELEMENT_OVERHEAT_FAULT) system_error_code += 2; // code 22
+        if (hfaults & HEATER_POT_OVERHEAT_FAULT) system_error_code += 3; // code 23 (if both then 25)
+        if (hfaults & HEATER_POOR_CONTACT_FAULT) system_error_code += 6; // code 26
         reset_app_state(STATE_SYSTEM_ERROR);
         return;
     }
