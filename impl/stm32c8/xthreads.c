@@ -31,8 +31,23 @@ void xthreads_stop(const xthread_handle_t *handle) {
 
 void xthreads_notify(const xthread_handle_t *handle) {
     if (handle != nullptr) {
+        // notify from IRQ hits different
+        if (xthreads_current() == nullptr) {
+            BaseType_t woken_hp_thread = pdFALSE; // woken higher priority thread
+            vTaskNotifyGiveFromISR((TaskHandle_t)handle, &woken_hp_thread);
+            portYIELD_FROM_ISR(woken_hp_thread);
+            return;
+        }
         xTaskNotifyGive((TaskHandle_t)handle);
     }
+}
+
+xthread_handle_t* xthreads_current(void) {
+    // inside irq handler (ipsr == 0 -> normal code)
+    if (__get_IPSR() != 0) {
+        return nullptr;
+    }
+    return xTaskGetCurrentTaskHandle();
 }
 
 void xthreads_yield(void) {
@@ -55,6 +70,13 @@ void xthreads_csexit(void) {
     taskEXIT_CRITICAL();
 }
 
-void xthreads_wait(const xthread_wait_mode_t wait_mode) {
-    ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, portMAX_DELAY);
+uint32_t xthreads_wait(const xthread_wait_mode_t wait_mode) {
+    // if the TCB "counter" == 0 -> consider it blocked
+    return ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, portMAX_DELAY);
+}
+
+// bounded wait
+uint32_t xthreads_bwait(const xthread_wait_mode_t wait_mode, const uint32_t max_wait_ms) {
+    // if the TCB "counter" == 0 -> consider it blocked
+    return ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, pdMS_TO_TICKS(max_wait_ms));
 }

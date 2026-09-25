@@ -31,11 +31,13 @@ void xthreads_stop(const xthread_handle_t *handle);
 void xthreads_notify(const xthread_handle_t *handle);
 
 // from inside the thread
+xthread_handle_t* xthreads_current(void);
 void xthreads_yield(void);
 void xthreads_sleep(uint32_t ms);
 void xthreads_shutdown(void);
 void xthreads_csenter(void);
 void xthreads_csexit(void);
-void xthreads_wait(xthread_wait_mode_t wait_mode);
+uint32_t xthreads_wait(xthread_wait_mode_t wait_mode);
+uint32_t xthreads_bwait(xthread_wait_mode_t wait_mode, uint32_t max_wait_ms);
 
 #endif //XTHREADS_H

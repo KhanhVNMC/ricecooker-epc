@@ -48,7 +48,7 @@ ecc_rx_result_t ecc_on_rx_data(const uint8_t *data, const uint32_t len) {
     return ECC_RX_PARTIAL;
 }
 
-bool lrcmdctl_ob_send(const cmd_type_t cmd_type, const uint8_t *payload, const uint16_t payload_size) {
+bool lrcmdctl_ob_send(const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size) {
     if (!ecc_is_layer_ready()) {
         return false;
     }
@@ -58,14 +58,18 @@ bool lrcmdctl_ob_send(const cmd_type_t cmd_type, const uint8_t *payload, const u
     }
     const uint16_t datagram_size = payload_size + 3u;
     uint8_t frame[datagram_size];
-    // datagram: [size (2)][type (1)][payload]
+    // datagram: [size (2)][resp type (1)][payload]
     frame[0] = (uint8_t)(datagram_size >> 8u);
     frame[1] = (uint8_t)(datagram_size & 0xFFu);
-    frame[2] = cmd_type;
+    frame[2] = resp_type;
     if (payload_size != 0) {
         memcpy(&frame[3], payload, payload_size);
     }
     return ecc_tx_data(frame, datagram_size);
+}
+
+bool lrcmdctl_ob_ack(const bool positive) {
+    return lrcmdctl_ob_send(positive ? RSOB_GENERIC_ACK : RSOB_GENERIC_NAK, nullptr, 0);
 }
 
 bool lrcmdctl_ib_has_pending(void) {
@@ -73,12 +77,16 @@ bool lrcmdctl_ib_has_pending(void) {
     return packet_ready && ecc_is_layer_ready();
 }
 
-cmd_type_t lrcmdctl_ib_get_cmd_type(void) {
+ib_cmd_type_t lrcmdctl_ib_get_cmd_type(void) {
     return ib_cmdpkt[2];
 }
 
 uint16_t lrcmdctl_ib_payload_size(void) {
     return cmdpkt_size - 3u;
+}
+
+bool lrcmdctl_ib_has_payload(void) {
+    return lrcmdctl_ib_payload_size() != 0;
 }
 
 const uint8_t* lrcmdctl_ib_get_payload(void) {

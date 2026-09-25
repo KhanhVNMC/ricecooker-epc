@@ -11,6 +11,7 @@
 
 #define APP_MAIN_INTERVAL_MS        (10)
 #define APP_BLINK_INTERVAL_MS       (500u)
+
 #define APP_ANIM_FRAME_FAST_MS      (200u)
 #define APP_ANIM_FRAME_NORMAL_MS    (250u)
 #define APP_ANIM_FRAME_SOFT_MS      (300u)
@@ -102,7 +103,7 @@ void on_cooking_complete(void);
 void on_delayed_countdown_end(void);
 void update_rc_display(void);
 void on_platform_tick(void);
-void on_cmd_datagram_recv(cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload);
+bool on_cmd_datagram_recv(ib_cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload);
 
 // util functions
 static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
@@ -438,6 +439,10 @@ void begin_task_delayed_countdown(void) {
     app_state = STATE_DELAYED_COUNTDOWN;
 }
 
+void on_delayed_countdown_end(void) {
+    begin_task_cooking();
+}
+
 static void watchdog_platform_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 1x)
     const heater_faults_t hfaults = heater_get_faults();
@@ -456,10 +461,6 @@ static void watchdog_platform_tick(const uint32_t current_time) {
     }
 }
 
-void on_delayed_countdown_end(void) {
-    begin_task_cooking();
-}
-
 void on_platform_tick(void) {
     const uint32_t current_time = rc_time_current_millis();
     // trigger the job at the end of the delay tunnel
@@ -475,8 +476,6 @@ void on_platform_tick(void) {
         watchdog_platform_tick(current_time);
         on_cooking_pltick(current_time);
     }
-    // update output
-    update_rc_display();
     // process control datagrams
     if (lrcmdctl_ib_has_pending()) {
         on_cmd_datagram_recv(
@@ -486,24 +485,37 @@ void on_platform_tick(void) {
         );
         lrcmdctl_ib_release();
     }
+    // physical input handling
+    const bitmask8_t current_inp_mask = rc_buttons_get_state();
+    if (last_input_mask != current_inp_mask) {
+        // current && !last
+        // only fire event on btn press (not release)
+        const bitmask8_t changed = current_inp_mask & ~last_input_mask;
+        if (changed) {
+            buzzer_play_beep();
+            app_on_btns_press(changed);
+        }
+        last_input_mask = current_inp_mask;
+    }
+    // update output
+    update_rc_display();
 }
 
-void on_cmd_datagram_recv(const cmd_type_t cmd_type, const uint16_t payload_size, const uint8_t *payload) {
-    // TODO test code
-    if (cmd_type == 0x36) {
-        const uint16_t summation = (payload[0] << 8 | payload[1]) + (payload[2] << 8 | payload[3]);
-        const uint8_t result[4] = {
-            (summation >> 24) & 0xFF, (summation >> 16) & 0xFF, (summation >> 8) & 0xFF, summation & 0xFF
-        };
-        lrcmdctl_ob_send(0x18, result, 4);
-        return;
+bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_size, const uint8_t *payload) {
+    switch (cmd_type) {
+        case CIB_DEBUG_ECHO: {
+            return lrcmdctl_ob_send(RSOB_DEBUG_ECHO, payload, payload_size);
+        }
+        case CIB_DEBUG_SET_DLED: {
+            if (payload_size != 1) goto resp_nak;
+            rc_dbg_led_set(payload[0]);
+            goto resp_ack;
+        }
+        // unknown command/corrupted commands
+        default: goto resp_nak;
     }
-
-    if (cmd_type == 0xAB) {
-        rc_dbg_led_set(payload[0] != 0);
-        lrcmdctl_ob_send(0x33, (uint8_t[1]) {payload[0] != 0 ? 0x36 : 0x18}, 1);
-        return;
-    }
+    resp_nak: return lrcmdctl_ob_ack(false);
+    resp_ack: return lrcmdctl_ob_ack(true);
 }
 
 // TODO MAKE THIS WORK PROPERLY

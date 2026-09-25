@@ -3,6 +3,7 @@ cmake-build-debug
 build/
 bin/
 .idea/editor.xml
+.idea/riceccooker.iml
 Project Backups
 *.workspace
 .vscode

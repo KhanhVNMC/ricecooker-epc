@@ -1,11 +1,13 @@
 #include "usbd_cdc.h"
 #include "include/ecclayer.h"
+#include "include/xthreads.h"
 
 static USBD_HandleTypeDef usb_device; // generic USB protocol stack state
 static PCD_HandleTypeDef usb_pcd; // actual STM32 USB peripheral state
 
 static uint8_t rx_buffer[CDC_DATA_FS_MAX_PACKET_SIZE]; // USB FS bulk packet = max 64 bytes
 static uint8_t tx_buffer[256]; // TX staging buf
+static xthread_handle_t *tx_caller_thread;
 
 // USB device description bullshit
 static uint8_t usb_string_buf[USBD_MAX_STR_DESC_SIZ];
@@ -147,19 +149,42 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
 }
 ///////////////////// END OF STOLEN CODE /////////////////////
 
-bool ecc_tx_data(const void *data, const uint16_t length) {
+bool ecc_is_tx_ready(void) {
+    const USBD_CDC_HandleTypeDef *cdc = (USBD_CDC_HandleTypeDef*)usb_device.pClassData;
+    // TxState == 0 -> IDLE, ready to tx
+    return cdc != nullptr && cdc->TxState == 0U;
+}
+
+static bool ecc_data_tx_generic(const void *data, const uint16_t length, const bool wait_ready) {
     // dont overflow the staging buffer
     if (!ecc_is_layer_ready() || length > sizeof(tx_buffer)) {
         return false;
     }
-    const USBD_CDC_HandleTypeDef *cdc = (USBD_CDC_HandleTypeDef*)usb_device.pClassData;
-    if (cdc == nullptr || cdc->TxState != 0U) { // previous TX still active
+    if (wait_ready) {
+        tx_caller_thread = xthreads_current();
+        if (!ecc_is_tx_ready() && xthreads_bwait(XTHREAD_WAIT_ALL, 10) == 0u) {
+            if (!ecc_is_tx_ready()) {
+                tx_caller_thread = nullptr;
+                return false; // timed out & not ready yet
+            }
+            // somehow we're ready now, not complaining!
+        }
+        tx_caller_thread = nullptr;
+    } else if (!ecc_is_tx_ready()) { // previous TX still active
         return false;
     }
     // copy data to the staging buf
     memcpy(tx_buffer, data, length);
     USBD_CDC_SetTxBuffer(&usb_device, tx_buffer, length);
     return USBD_CDC_TransmitPacket(&usb_device) == USBD_OK;
+}
+
+bool ecc_tx_data_async(const void *data, const uint16_t length) {
+    return ecc_data_tx_generic(data, length, false);
+}
+
+bool ecc_tx_data(const void *data, const uint16_t length) {
+    return ecc_data_tx_generic(data, length, true);
 }
 
 static int8_t cdc_init(void) {
@@ -177,6 +202,7 @@ static int8_t cdc_control(uint8_t, uint8_t*, uint16_t) {
 }
 
 static int8_t cdc_tx_complete(uint8_t*, uint32_t*, uint8_t) {
+    xthreads_notify(tx_caller_thread);
     return USBD_OK;
 }
 
