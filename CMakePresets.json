@@ -32,12 +32,22 @@
       "inherits": "stm32c8-debug",
       "binaryDir": "${sourceDir}/artifacts/stm32c8/release",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "stm32c8-release-proteus",
+      "displayName": "STM32C8 with Proteus 8.17 CLZ Workarounds Release",
+      "inherits": "stm32c8-release",
+      "binaryDir": "${sourceDir}/artifacts/stm32c8/proteus-release",
+      "cacheVariables": {
+        "COMPILED_FOR_PROTEUS_8_17": "ON"
+      }
     }
   ],
   "buildPresets": [
     { "name": "host-debug", "configurePreset": "host-debug", "jobs": 0 },
     { "name": "host-release", "configurePreset": "host-release", "jobs": 0 },
     { "name": "stm32c8-debug", "configurePreset": "stm32c8-debug", "jobs": 0 },
-    { "name": "stm32c8-release", "configurePreset": "stm32c8-release", "jobs": 0 }
+    { "name": "stm32c8-release", "configurePreset": "stm32c8-release", "jobs": 0 },
+    { "name": "stm32c8-release-proteus", "configurePreset": "stm32c8-release-proteus", "jobs": 0 }
   ]
 }

@@ -29,19 +29,6 @@ void xthreads_stop(const xthread_handle_t *handle) {
     }
 }
 
-void xthreads_notify(const xthread_handle_t *handle) {
-    if (handle != nullptr) {
-        // notify from IRQ hits different
-        if (xthreads_current() == nullptr) {
-            BaseType_t woken_hp_thread = pdFALSE; // woken higher priority thread
-            vTaskNotifyGiveFromISR((TaskHandle_t)handle, &woken_hp_thread);
-            portYIELD_FROM_ISR(woken_hp_thread);
-            return;
-        }
-        xTaskNotifyGive((TaskHandle_t)handle);
-    }
-}
-
 xthread_handle_t* xthreads_current(void) {
     // inside irq handler (ipsr == 0 -> normal code)
     if (__get_IPSR() != 0) {
@@ -70,13 +57,35 @@ void xthreads_csexit(void) {
     taskEXIT_CRITICAL();
 }
 
-uint32_t xthreads_wait(const xthread_wait_mode_t wait_mode) {
+// this increments the TCB "counter", which allow
+// xthreads_wait to unblock
+void xthreads_notify(const xthread_handle_t *handle) {
+    if (handle != nullptr) {
+        // notify from IRQ hits different
+        if (xthreads_current() == nullptr) {
+            BaseType_t woken_hp_thread = pdFALSE; // woken higher priority thread
+            vTaskNotifyGiveFromISR((TaskHandle_t)handle, &woken_hp_thread);
+            portYIELD_FROM_ISR(woken_hp_thread);
+            return;
+        }
+        xTaskNotifyGive((TaskHandle_t)handle);
+    }
+}
+
+// this returns the value before the wait consumes the TCB counter
+// wait mode WAIT_ALL set the counter to 0, while WAIT_ONE just subtract 1
+static uint32_t xthreads_wait_generic(const xthread_wait_mode_t wait_mode, const uint32_t max_wait_ticks) {
     // if the TCB "counter" == 0 -> consider it blocked
-    return ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, portMAX_DELAY);
+    return ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, max_wait_ticks);
+}
+
+// unbounded wait
+void xthreads_wait(const xthread_wait_mode_t wait_mode) {
+    xthreads_wait_generic(wait_mode, portMAX_DELAY);
 }
 
 // bounded wait
-uint32_t xthreads_bwait(const xthread_wait_mode_t wait_mode, const uint32_t max_wait_ms) {
-    // if the TCB "counter" == 0 -> consider it blocked
-    return ulTaskNotifyTake(wait_mode == XTHREAD_WAIT_ALL ? pdTRUE : pdFALSE, pdMS_TO_TICKS(max_wait_ms));
+// returns false if timed out
+bool xthreads_bwait(const xthread_wait_mode_t wait_mode, const uint32_t max_wait_ms) {
+    return xthreads_wait_generic(wait_mode, pdMS_TO_TICKS(max_wait_ms)) != BWAIT_TIMED_OUT;
 }

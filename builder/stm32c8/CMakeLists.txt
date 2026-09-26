@@ -52,7 +52,7 @@ target_link_libraries(ricecooker_stm32c8 PRIVATE
     stm32::hal
     stm32::usb_lib
     freertos_kernel
-    m
+    m#ath
 )
 
 set(STM32_LINKER_SCRIPT "${CMAKE_CURRENT_LIST_DIR}/STM32F103C8_FLASH.ld")

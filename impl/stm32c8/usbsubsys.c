@@ -7,7 +7,7 @@ static PCD_HandleTypeDef usb_pcd; // actual STM32 USB peripheral state
 
 static uint8_t rx_buffer[CDC_DATA_FS_MAX_PACKET_SIZE]; // USB FS bulk packet = max 64 bytes
 static uint8_t tx_buffer[256]; // TX staging buf
-static xthread_handle_t *tx_caller_thread;
+static volatile xthread_handle_t *tx_caller_thread;
 
 // USB device description bullshit
 static uint8_t usb_string_buf[USBD_MAX_STR_DESC_SIZ];
@@ -149,29 +149,40 @@ void USB_LP_CAN1_RX0_IRQHandler(void) {
 }
 ///////////////////// END OF STOLEN CODE /////////////////////
 
+#ifdef COMPILED_FOR_PROTEUS_8_17
+__attribute__((optimize(0)))
+#endif
 bool ecc_is_tx_ready(void) {
     const USBD_CDC_HandleTypeDef *cdc = (USBD_CDC_HandleTypeDef*)usb_device.pClassData;
     // TxState == 0 -> IDLE, ready to tx
     return cdc != nullptr && cdc->TxState == 0U;
 }
 
-static bool ecc_data_tx_generic(const void *data, const uint16_t length, const bool wait_ready) {
+#ifdef COMPILED_FOR_PROTEUS_8_17
+__attribute__((optimize(0)))
+#endif
+static bool ecc_data_tx_generic(const void *data, const uint16_t length, const bool wait_until_ready) {
     // dont overflow the staging buffer
     if (!ecc_is_layer_ready() || length > sizeof(tx_buffer)) {
         return false;
     }
-    if (wait_ready) {
-        tx_caller_thread = xthreads_current();
-        if (!ecc_is_tx_ready() && xthreads_bwait(XTHREAD_WAIT_ALL, 10) == 0u) {
-            if (!ecc_is_tx_ready()) {
-                tx_caller_thread = nullptr;
-                return false; // timed out & not ready yet
-            }
-            // somehow we're ready now, not complaining!
+    if (!ecc_is_tx_ready()) { // previous TX still active
+        if (!wait_until_ready) {
+            return false; // no wait, fail immediately
         }
+
+        // publish the caller thread so that cdc_tx_complete can notify it once
+        tx_caller_thread = xthreads_current();
+        xthreads_bwait(XTHREAD_WAIT_ALL, 10); // deadline 10ms
         tx_caller_thread = nullptr;
-    } else if (!ecc_is_tx_ready()) { // previous TX still active
-        return false;
+
+        // sanity check
+        if (!ecc_is_tx_ready()) {
+            // timed out & not ready yet
+            // OR woke up for the wrong reason & not ready yet
+            return false;
+        }
+        // somehow we're ready now, not complaining!
     }
     // copy data to the staging buf
     memcpy(tx_buffer, data, length);
@@ -270,7 +281,9 @@ bool ecc_is_layer_ready() {
     return usb_initialized && usb_device.dev_state == USBD_STATE_CONFIGURED;
 }
 
-__attribute__((optimize(0))) // CLZ bug, again (pls kill me)
+#ifdef COMPILED_FOR_PROTEUS_8_17
+__attribute__((optimize(0)))
+#endif
 bool ecc_init_stack(void) {
     usb_initialized = false;
     // initialize generic USB protocol machinery

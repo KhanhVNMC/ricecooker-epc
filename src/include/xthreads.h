@@ -22,6 +22,8 @@ typedef enum : uint8_t {
     XTHREAD_WAIT_ALL,
 } xthread_wait_mode_t;
 
+#define BWAIT_TIMED_OUT (0u)
+
 // from outside the thread
 xthread_handle_t* xthreads_new(
     xthread_func_t func, void *args,
@@ -37,7 +39,7 @@ void xthreads_sleep(uint32_t ms);
 void xthreads_shutdown(void);
 void xthreads_csenter(void);
 void xthreads_csexit(void);
-uint32_t xthreads_wait(xthread_wait_mode_t wait_mode);
-uint32_t xthreads_bwait(xthread_wait_mode_t wait_mode, uint32_t max_wait_ms);
+void xthreads_wait(xthread_wait_mode_t wait_mode);
+bool xthreads_bwait(xthread_wait_mode_t wait_mode, uint32_t max_wait_ms);
 
 #endif //XTHREADS_H
