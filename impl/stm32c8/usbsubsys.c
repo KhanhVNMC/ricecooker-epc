@@ -6,8 +6,8 @@ static USBD_HandleTypeDef usb_device; // generic USB protocol stack state
 static PCD_HandleTypeDef usb_pcd; // actual STM32 USB peripheral state
 
 static uint8_t rx_buffer[CDC_DATA_FS_MAX_PACKET_SIZE]; // USB FS bulk packet = max 64 bytes
-static uint8_t tx_buffer[256]; // TX staging buf
-static volatile xthread_handle_t *tx_caller_thread;
+static uint8_t tx_buffer[ECC_MAX_DATAGRAM_SIZE]; // TX staging buf
+static xthread_handle_t *tx_caller_thread;
 
 // USB device description bullshit
 static uint8_t usb_string_buf[USBD_MAX_STR_DESC_SIZ];
@@ -162,7 +162,7 @@ bool ecc_is_tx_ready(void) {
 __attribute__((optimize(0)))
 #endif
 static bool ecc_data_tx_generic(const void *data, const uint16_t length, const bool wait_until_ready) {
-    // dont overflow the staging buffer
+    // reject if usb is not ready or invalid length
     if (!ecc_is_layer_ready() || length > sizeof(tx_buffer)) {
         return false;
     }
@@ -173,7 +173,9 @@ static bool ecc_data_tx_generic(const void *data, const uint16_t length, const b
 
         // publish the caller thread so that cdc_tx_complete can notify it once
         tx_caller_thread = xthreads_current();
-        xthreads_bwait(XTHREAD_WAIT_ALL, 10); // deadline 10ms
+        if (!ecc_is_tx_ready()) {
+            xthreads_bwait(XTHREAD_WAIT_ALL, 10); // deadline 10ms
+        }
         tx_caller_thread = nullptr;
 
         // sanity check
@@ -221,7 +223,7 @@ static int8_t cdc_receive(uint8_t *buffer, uint32_t *length_ptr) {
     switch (ecc_on_rx_data(buffer, *length_ptr)) {
         case ECC_RX_PARTIAL:
         case ECC_RX_REJECTED: {
-            ecc_next_read_ready(); // allow reading next packet instantly
+            ecc_next_read_ready(); // allow reading next usb packet instantly
             break;
         }
         case ECC_RX_COMPLETE: {
