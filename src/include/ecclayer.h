@@ -1,6 +1,8 @@
-#ifndef USBHANDLE_H
-#define USBHANDLE_H
+#ifndef ECCLAYER_H
+#define ECCLAYER_H
 #include <stdint.h>
+
+#define ECC_MAX_DATAGRAM_SIZE (256u)
 
 typedef enum : uint8_t {
     ECC_RX_PARTIAL,
@@ -16,4 +18,4 @@ bool ecc_tx_data(const void *data, uint16_t length);
 
 void ecc_next_read_ready(void);
 
-#endif //USBHANDLE_H
+#endif //ECCLAYER_H
