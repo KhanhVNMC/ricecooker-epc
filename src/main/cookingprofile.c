@@ -12,7 +12,7 @@ static const cooking_stage_t STAGES_RICE_NORMAL[] = {
     {
         .target_pot_temp = 100.0f,
         .ramp_rate_per_min = 3.0f,
-        .trigger_type    = TRIGGER_WATER_BOILD_DRY,
+        .trigger_type    = TRIGGER_WATER_BOIL_DRY,
         .ceiling_duration_ms     = 20u * 60u * 1000u, // timeout an toàn 20 phút
         .temp_threshold  = 105.0f // ngưỡng phát hiện cạn nước
     },

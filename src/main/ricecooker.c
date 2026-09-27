@@ -616,12 +616,13 @@ void on_cooking_pltick(const uint32_t current_time) {
         }
         case TRIGGER_WATER_BOIL_DRY: {
             // high temperature (have no water left)
-            // high slope during 5 mins
+            // high slope during 1 mins
             // timeout
             const float slope = tempstats_linreg_slope();
-            const bool min_boil_time_met = stage_elapsed_ms >= 5u * 60u * 1000u;
+            const bool min_boil_time_met = stage_elapsed_ms >= 1u * 60u * 1000u;
+            float program_slope = (curr_stage->ramp_rate_per_min)/(60.0f)
             if (actual_temp >= curr_stage->temp_threshold ||
-                (min_boil_time_met && slope >= 0.25f && actual_temp >= 100.0f) ||
+                (min_boil_time_met && slope >= (program_slope * 1.1f) && actual_temp >= 100.0f) ||//too high actual slope compared to program slope
                 stage_elapsed_ms >= curr_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
@@ -630,7 +631,7 @@ void on_cooking_pltick(const uint32_t current_time) {
     }
 
     if (advance_stage) {
-        stage_start_program_temp = program_temp;
+        stage_start_program_temp = rc_sensor_get_temp(RC_SENSOR_POT);
         active_stage_idx++;
         if (active_stage_idx < active_profile->stage_count) {
             // the next stage
