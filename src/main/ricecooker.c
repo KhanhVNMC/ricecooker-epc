@@ -70,22 +70,19 @@ static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[12] = { // holy jank
 static app_state_t    app_state;
 static cooking_mode_t cooking_mode;
 
+// manual mode configuration
 static uint8_t  manual_mode_temp;
 static uint16_t manual_mode_time_mins;
 
-static bool     delayed_mode_active;
+// delayed mode configuration
 static uint16_t delayed_mode_time_mins;
-
-static bool config_time_edit_minutes;
-
-// error detection policy & shit
-static uint8_t system_error_code;
+static bool     delayed_mode_configured; // true if ready to select mode
 
 // timestamps
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
-static uint32_t timestamp_pot_temp_display_start; // cosmetic
 static uint32_t timestamp_tempstats_last_sample; // temp sample
+static uint32_t timestamp_pot_temp_display_start; // cosmetic
 
 // thermal cooking profile tracking
 static const cooking_profile_t *active_profile = nullptr;
@@ -93,12 +90,18 @@ static uint8_t  active_stage_idx = 0;
 static uint32_t timestamp_stage_start = 0;
 static float stage_start_program_temp = 0.0f;
 
+// for time cfg states, like manual or delay time
+static bool config_time_edit_minutes;
+
+// error detection policy & shit
+static uint8_t system_error_code;
+
 // masks & shit
 static bitmask8_t last_input_mask = 0;
 
 //// APPLICATION FINITE STATE MACHINE /////
-void begin_task_cooking(void);
-void begin_task_delayed_countdown(void);
+void start_cooking_program(void); // honor configured delay
+void start_task_cooking_now(void); // enter STATE_COOKING immediately
 void on_cooking_pltick(uint32_t current_time);
 void on_cooking_complete(void);
 void on_delayed_countdown_end(void);
@@ -127,7 +130,7 @@ void reset_app_state(const app_state_t reset_to) {
     manual_mode_time_mins = DEFAULT_MANUAL_MODE_TIME;
     manual_mode_temp = DEFAULT_MANUAL_MODE_TEMP;
     delayed_mode_time_mins = DEFAULT_DELAYED_MODE_TIME;
-    delayed_mode_active = false;
+    delayed_mode_configured = false;
     config_time_edit_minutes = true;
     tempstats_reset();
 
@@ -171,17 +174,11 @@ void app_on_btns_press(const bitmask8_t pressed) {
                     app_state = STATE_CF_MANUAL_TEMP;
                     break;
                 }
-                // if "DELAY" configured complete -> exec delay code
-                if (delayed_mode_active) {
-                    begin_task_delayed_countdown();
-                    break;
-                }
-                // else exec normal cooking proc
-                begin_task_cooking();
+                start_cooking_program(); // delayed/now is handled inside
                 break;
             }
             // in delayed mode, you cannot select delayed again
-            const uint8_t mode_count = delayed_mode_active ? MODE_DELAYED_EXEC : COUNT_COOKING_MODES;
+            const uint8_t mode_count = delayed_mode_configured ? MODE_DELAYED_EXEC : COUNT_COOKING_MODES;
             // wraparounds for less clunky navigation
             if (pressed & RC_BTN_INCR) {
                 cooking_mode = (cooking_mode + 1) % mode_count;
@@ -210,13 +207,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
         }
         case STATE_CF_MANUAL_TIME: {
             if (pressed & RC_BTN_SELECT) {
-                // if "DELAY" configured before -> exec delay code
-                if (delayed_mode_active) {
-                    begin_task_delayed_countdown();
-                    break;
-                }
-                // else exec normal cooking proc with flag set
-                begin_task_cooking();
+                start_cooking_program(); // delayed/now is handled inside
                 break;
             }
             if (pressed & RC_BTN_OPTIONS) {
@@ -230,7 +221,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
         case STATE_CF_DELAYED_TIME: {
             if (pressed & RC_BTN_SELECT) {
                 // delayed mode configured complete
-                delayed_mode_active = true;
+                delayed_mode_configured = true;
                 cooking_mode = MODE_RICE_NORMAL; // default mode
                 app_state = STATE_CF_DELAYED_MODE_SELECT;
                 break;
@@ -418,30 +409,24 @@ static inline void app_display_temperature(const uint16_t temp) {
 
 void task_main_app_thread(void *args) {
     while (1) {
-        // input
-        const bitmask8_t current_mask = rc_buttons_get_state();
-        if (last_input_mask != current_mask) {
-            // current && !last
-            // only fire event on btn press (not release)
-            const bitmask8_t changed = current_mask & ~last_input_mask;
-            if (changed) {
-                buzzer_play_beep();
-                app_on_btns_press(changed);
-            }
-            last_input_mask = current_mask;
-        }
         on_platform_tick();
         xthreads_sleep(APP_MAIN_INTERVAL_MS);
     }
 }
 
-void begin_task_delayed_countdown(void) {
-    timestamp_delayed_start = rc_time_current_millis();
-    app_state = STATE_DELAYED_COUNTDOWN;
+void start_cooking_program(void) {
+    // if "DELAY" configured before -> start countdown
+    if (delayed_mode_configured) {
+        timestamp_delayed_start = rc_time_current_millis();
+        app_state = STATE_DELAYED_COUNTDOWN;
+        return;
+    }
+    // else exec normal cooking proc
+    start_task_cooking_now();
 }
 
 void on_delayed_countdown_end(void) {
-    begin_task_cooking();
+    start_task_cooking_now();
 }
 
 static void watchdog_platform_tick(const uint32_t current_time) {
@@ -468,7 +453,7 @@ void on_platform_tick(void) {
     if (app_state == STATE_DELAYED_COUNTDOWN) {
         const uint32_t dl_duration_ms = delayed_mode_time_mins * 60000u;
         if (current_time - timestamp_delayed_start >= dl_duration_ms) {
-            delayed_mode_active = false;
+            delayed_mode_configured = false;
             on_delayed_countdown_end();
         }
     }
@@ -541,7 +526,8 @@ static float get_stage_program_temp(
     return program_temp;
 }
 
-void begin_task_cooking(void) {
+// TODO MAKE THIS WORK PROPERLY
+void start_task_cooking_now(void) {
     timestamp_cook_start = rc_time_current_millis();
     timestamp_stage_start = timestamp_cook_start;
     active_stage_idx = 0;
@@ -622,7 +608,8 @@ void on_cooking_pltick(const uint32_t current_time) {
             const bool min_boil_time_met = stage_elapsed_ms >= 1u * 60u * 1000u;
             float program_slope = (curr_stage->ramp_rate_per_min)/(60.0f)
             if (actual_temp >= curr_stage->temp_threshold ||
-                (min_boil_time_met && slope >= (program_slope * 1.1f) && actual_temp >= 100.0f) ||//too high actual slope compared to program slope
+                (min_boil_time_met && slope >= (program_slope * 1.1f) && actual_temp >= 100.0f) ||
+                //too high actual slope compared to program slope
                 stage_elapsed_ms >= curr_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
