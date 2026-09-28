@@ -1,9 +1,9 @@
 #ifndef RICECOOKER_COOKING_PROFILE_H
 #define RICECOOKER_COOKING_PROFILE_H
 #include <stdint.h>
-#include <stdbool.h>
-
 #include "ricecooker.h"
+
+#define COOKING_KEEP_WARM_TEMP      (65.0f)
 
 typedef enum : uint8_t {
     TRIGGER_TIME_EXPIRED, // turn to next stage if timeout

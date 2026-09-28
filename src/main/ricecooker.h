@@ -16,6 +16,7 @@ typedef enum : uint8_t {
     // config: manual
     STATE_CF_MANUAL_TEMP,
     STATE_CF_MANUAL_TIME,
+    STATE_CF_MANUAL_AUTO_WARM,
     // config: delayed
     STATE_CF_DELAYED_TIME,
     STATE_CF_DELAYED_MODE_SELECT,
