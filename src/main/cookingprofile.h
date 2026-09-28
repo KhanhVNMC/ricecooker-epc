@@ -13,6 +13,7 @@ typedef enum : uint8_t {
 
 typedef struct {
     float target_pot_temp;
+    float ramp_rate_per_min; // heating rate in C
     stage_trigger_type_t trigger_type; // transitional stage condition
     uint32_t ceiling_duration_ms; // ceiling duration (ms), will pass to next stage regardless
     float temp_threshold;
