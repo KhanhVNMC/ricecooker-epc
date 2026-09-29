@@ -47,7 +47,10 @@ ecc_rx_result_t ecc_on_rx_data(const uint8_t *data, const uint32_t len) {
     return ECC_RX_PARTIAL;
 }
 
-bool lrcmdctl_ob_send(const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size) {
+bool lrcmdctl_ob_send_generic(
+    const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size,
+    const bool wait_until_ready
+) {
     if (!ecc_is_layer_ready()) {
         return false;
     }
@@ -64,7 +67,15 @@ bool lrcmdctl_ob_send(const ob_resp_type_t resp_type, const uint8_t *payload, co
     if (payload_size != 0) {
         memcpy(&frame[3], payload, payload_size);
     }
-    return ecc_tx_data(frame, datagram_size);
+    return (wait_until_ready ? ecc_tx_data : ecc_tx_data_async)(frame, datagram_size);
+}
+
+bool lrcmdctl_ob_send(const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size) {
+    return lrcmdctl_ob_send_generic(resp_type, payload, payload_size, true);
+}
+
+bool lrcmdctl_ob_send_async(const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size) {
+    return lrcmdctl_ob_send_generic(resp_type, payload, payload_size, false);
 }
 
 bool lrcmdctl_ob_ack(const bool positive) {

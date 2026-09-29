@@ -7,6 +7,7 @@
 #include "include/tm1637dv.h"
 #include "include/heaterctl.h"
 #include "include/buzzerctl.h"
+#include "include/ecclayer.h"
 #include "include/lrcmdctl.h"
 
 #define APP_MAIN_INTERVAL_MS        (10)
@@ -69,6 +70,9 @@ static constexpr spinny_step_t ANIMATION_SPINNY_STEPS[12] = { // holy jank
 };
 
 //// APPLICATION STATES / FLAGS /////
+// application layer clock (updated per tick)
+static uint32_t app_tick_start_timestamp;
+
 // state machines shit
 static app_state_t    app_state;
 static cooking_mode_t cooking_mode;
@@ -110,6 +114,8 @@ bool on_cmd_datagram_recv(ib_cmd_type_t cmd_type, uint16_t payload_size, const u
 static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
 static void app_display_countdown(bool blink, uint32_t time_left_secs);
 static void app_display_temperature(uint16_t temp);
+// 禁弾「過去を刻む時計」: time math is intentionally wraparound OK!
+static uint32_t app_current_time() { return app_tick_start_timestamp; }
 
 void reset_app_state(const app_state_t reset_to) {
     // heater
@@ -245,7 +251,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
         case STATE_COOKING: {
             if (pressed & RC_BTN_OPTIONS) {
                 // this should display the temp screen for Xs (default 3)
-                timestamp_pot_temp_display_start = rc_time_current_millis();
+                timestamp_pot_temp_display_start = app_current_time();
             }
             break;
         }
@@ -254,7 +260,7 @@ void app_on_btns_press(const bitmask8_t pressed) {
 }
 
 void update_rc_display(void) {
-    const uint32_t current_time = rc_time_current_millis();
+    const uint32_t current_time = app_current_time();
     const bool blink = (current_time / APP_BLINK_INTERVAL_MS) & 1u; // flip flop every interval
 
     switch (app_state) {
@@ -351,7 +357,7 @@ void update_rc_display(void) {
             break;
         }
         case STATE_CF_MANUAL_AUTO_WARM: {
-            // display [HL:<On/OF>] (only <On/OF> blinks)
+            // display [HL:<ON/OF>] (only <ON/OF> blinks)
             display_set_characters((digit_t[4]) {CHAR_H, CHAR_L,
                 !blink ? CHAR_NULL : 0, // the 0 looks prettier
                 !blink ? CHAR_NULL : (manual_mode_auto_warm ? CHAR_N : CHAR_F)
@@ -421,6 +427,7 @@ static inline void app_display_temperature(const uint16_t temp) {
 
 void task_main_app_thread(void *args) {
     while (1) {
+        app_tick_start_timestamp = rc_time_current_millis();
         on_platform_tick();
         xthreads_sleep(APP_MAIN_INTERVAL_MS);
     }
@@ -429,7 +436,7 @@ void task_main_app_thread(void *args) {
 void start_cooking_program(void) {
     // if "DELAY" configured before -> start countdown
     if (delayed_mode_configured) {
-        timestamp_delayed_start = rc_time_current_millis();
+        timestamp_delayed_start = app_current_time();
         app_state = STATE_DELAYED_COUNTDOWN;
         return;
     }
@@ -441,6 +448,14 @@ void on_delayed_countdown_end(void) {
     start_task_cooking_now();
 }
 
+static void faults_report_to_ecc(const uint8_t metadata) {
+    // report to ECC layer for diagnostic
+    if (ecc_is_layer_ready()) {
+        const uint8_t report[] = { system_error_code, metadata }; // [syserr code][extra metadata]
+        lrcmdctl_ob_send(RAOB_FAULTS_REPORT, report, sizeof(report));
+    }
+}
+
 static void watchdog_platform_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 2x)
     const heater_faults_t hfaults = heater_get_faults();
@@ -450,17 +465,36 @@ static void watchdog_platform_tick(const uint32_t current_time) {
         if (hfaults & HEATER_POT_OVERHEAT_FAULT) system_error_code += 3; // code 23 (if both then 25)
         if (hfaults & HEATER_POOR_CONTACT_FAULT) system_error_code += 6; // code 26
         reset_app_state(STATE_SYSTEM_ERROR);
+        faults_report_to_ecc(hfaults);
         return;
     }
     // collect pot temp every second
     if (current_time - timestamp_tempstats_last_sample >= 1000u) {
-        tempstats_collect_sample(rc_sensor_get_temp(RC_SENSOR_POT));
+        const float pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
+        const float element_temp = rc_sensor_get_temp(RC_SENSOR_HEATER);
+
+        // for temp statistics
+        tempstats_collect_sample(pot_temp);
         timestamp_tempstats_last_sample = current_time;
+
+        // report to ecc layer
+        if (ecc_is_layer_ready()) {
+            const uint32_t raw_pottmp = ricf32u32(pot_temp); // float to raw bits
+            const uint32_t raw_elementtmp = ricf32u32(element_temp);
+            const uint8_t report[] = {
+                UNPACK_U32_BE(current_time), // time for graph
+                UNPACK_U32_BE(raw_pottmp), UNPACK_U32_BE(raw_elementtmp), // sensors
+                heater_is_enabled(), // heater control plane enabled
+                rc_heater_is_on() // physical heating element ON
+            };
+            // best effort send
+            lrcmdctl_ob_send_async(RAOB_HEATER_REPORT, report, sizeof(report));
+        }
     }
 }
 
 void on_platform_tick(void) {
-    const uint32_t current_time = rc_time_current_millis();
+    const uint32_t current_time = app_current_time();
     // trigger the job at the end of the delay tunnel
     if (app_state == STATE_DELAYED_COUNTDOWN) {
         const uint32_t dl_duration_ms = delayed_mode_time_mins * 60000u;
@@ -503,6 +537,24 @@ void on_platform_tick(void) {
 }
 
 //// APPLICATION EXTERNAL CONTROL LOGIC /////
+static inline bool reset_and_configure_manual_mode(
+    const uint8_t set_temp, const uint16_t set_time_mins, const bool set_auto_warm
+) {
+    if (set_temp < MIN_CONFIG_TEMP || set_temp > MAX_CONFIG_TEMP) {
+        // keep temp in range
+        return false;
+    }
+    if (set_time_mins < MIN_CONFIG_TIME_MINS || set_time_mins > MAX_CONFIG_TIME_MINS) {
+        // keep time in range
+        return false;
+    }
+    reset_app_state(STATE_IDLE); // reset to a safe state first
+    manual_mode_temp = set_temp;
+    manual_mode_time_mins = set_time_mins;
+    manual_mode_auto_warm = set_auto_warm;
+    return true;
+}
+
 bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_size, const uint8_t *payload) {
     switch (cmd_type) {
         case CIB_DEBUG_ECHO: {
@@ -518,16 +570,93 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             reset_app_state(STATE_IDLE);
             goto resp_ack;
         }
+        case CIB_CTL_PRESS_BTNS: {
+            // [button mask: 1]
+            if (payload_size != 1) goto resp_nak;
+            const bitmask8_t pressed_button = payload[0];
+            app_on_btns_press(pressed_button);
+            goto resp_ack;
+        }
         case CIB_CTL_COOK_PRESET: {
-            if (payload_size != sizeof(uint8_t)) goto resp_nak;
-            const auto mode = (cooking_mode_t)payload[0];
-            if (mode >= MODE_MANUAL_USER) {
-                // do not accept MANUAL and DELAYED
+            // [cooking preset: 1]
+            if (payload_size != 1) goto resp_nak;
+            const cooking_mode_t cook_preset = payload[0];
+
+            if (cook_preset >= MODE_MANUAL_USER) {
+                // do NOT accept MANUAL and DELAYED, they are not presets
                 goto resp_nak;
             }
-            cooking_mode = mode;
+            reset_app_state(STATE_IDLE); // reset to a safe state first
+            cooking_mode = cook_preset;
             start_cooking_program();
             goto resp_ack;
+        }
+        case CIB_CTL_COOK_MANUAL: {
+            // [manual_temp: 1][manual_time: 2][auto_warm: 1]
+            if (payload_size != 4) goto resp_nak;
+            const uint8_t set_temp = payload[0];
+            const uint16_t set_time_mins = (payload[1] << 8) | payload[2];
+            const bool set_auto_warm = payload[3] & 1;
+
+            if (reset_and_configure_manual_mode(set_temp, set_time_mins, set_auto_warm)) {
+                cooking_mode = MODE_MANUAL_USER;
+                start_cooking_program();
+                goto resp_ack;
+            }
+            goto resp_nak;
+        }
+        case CIB_CTL_COOK_DELAYED: {
+            // [cooking mode: 1][delayed_time: 2]|<for MANUAL>[manual_temp: 1][manual_time: 2][auto_warm: 1]
+            if (payload_size < 3) goto resp_nak;
+            const cooking_mode_t cook_mode = payload[0];
+            const uint16_t delay_time_mins = (payload[1] << 8) | payload[2];
+            if (delay_time_mins < MIN_CONFIG_TIME_MINS || delay_time_mins > MAX_CONFIG_TIME_MINS) {
+                // keep time in range
+                goto resp_nak;
+            }
+
+            if (cook_mode >= MODE_DELAYED_EXEC) {
+                goto resp_nak; // DELAYED is not a program per-se
+            }
+            // delayed manual requires temp, time and auto warm config
+            if (cook_mode == MODE_MANUAL_USER) {
+                if (payload_size != 4 /*see CIB_CTL_COOK_MANUAL*/ + 3) goto resp_nak;
+                const uint8_t set_temp = payload[3];
+                const uint16_t set_time_mins = (payload[4] << 8) | payload[5];
+                const bool set_auto_warm = payload[6] & 1;
+
+                if (reset_and_configure_manual_mode(set_temp, set_time_mins, set_auto_warm)) {
+                    delayed_mode_time_mins = delay_time_mins;
+                    cooking_mode = MODE_MANUAL_USER;
+                    delayed_mode_configured = true;
+                    start_cooking_program();
+                    goto resp_ack;
+                }
+                goto resp_nak;
+            }
+            // normal delayed with preset
+            reset_app_state(STATE_IDLE); // reset to a safe state first
+            delayed_mode_time_mins = delay_time_mins;
+            cooking_mode = cook_mode;
+            delayed_mode_configured = true;
+            start_cooking_program();
+            goto resp_ack;
+        }
+        case CIB_GET_APP_STATE_REPORT: {
+            if (payload_size != 0) goto resp_nak;
+            const uint8_t report[] = {
+                heater_get_faults(), system_error_code, // should be 0, 0 if healthy
+                app_state, cooking_mode, // state & cooking mode
+                last_input_mask, // last tick's physical input mask
+                UNPACK_U32_BE(app_current_time()), // app clock
+                UNPACK_U32_BE(timestamp_cook_start), // nonsensical if state != cooking
+                UNPACK_U32_BE(timestamp_delayed_start), // nonsensical if state != delayed
+                // manual configuration (could be stale)
+                manual_mode_temp, UNPACK_U16_BE(manual_mode_time_mins), manual_mode_auto_warm,
+                // delayed config (could be stale too)
+                delayed_mode_configured, UNPACK_U16_BE(delayed_mode_time_mins)
+            };
+            return lrcmdctl_ob_send(RSOB_APP_STATE_REPORT, report, sizeof(report));
         }
         // unknown command/corrupted commands
         default: goto resp_nak;
@@ -566,7 +695,6 @@ static float get_stage_program_temp(
     return program_temp;
 }
 
-// TODO MAKE THIS WORK PROPERLY
 void start_task_cooking_now(void) {
     if (cooking_mode == MODE_HOLD_WARM) {
         app_state = STATE_HOLD_WARM;
@@ -576,8 +704,9 @@ void start_task_cooking_now(void) {
     }
 
     app_state = STATE_COOKING;
-    timestamp_cook_start = rc_time_current_millis();
+    timestamp_cook_start = app_current_time();
 
+    // manual mode have no profile and static temp
     if (cooking_mode == MODE_MANUAL_USER) {
         active_profile = nullptr;
         heater_set_target_pot_temp(manual_mode_temp);
@@ -592,13 +721,15 @@ void start_task_cooking_now(void) {
     if (active_profile == nullptr || active_profile->stage_count <= 0) {
         system_error_code = 41; // code 41: profile error
         reset_app_state(STATE_SYSTEM_ERROR);
+        faults_report_to_ecc(0); // no meta
         return;
     }
 
     // setup the initial stage
-    timestamp_stage_start = rc_time_current_millis();
+    timestamp_stage_start = app_current_time();
     stage_start_pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
 
+    // TODO questionable
     const cooking_stage_t *first_stage = &active_profile->stages[0];
     const float program_temp = get_stage_program_temp(
         stage_start_pot_temp, first_stage, 0u
@@ -607,13 +738,12 @@ void start_task_cooking_now(void) {
     heater_set_enabled(true);
 }
 
-// TODO MAKE THIS WORK PROPERLY
 void on_cooking_pltick(const uint32_t current_time) {
     if (app_state == STATE_HOLD_WARM) {
         return;
     }
 
-    // manual mode timeout
+    // manual mode timeout (static time)
     if (cooking_mode == MODE_MANUAL_USER) {
         const uint32_t man_duration_ms = (uint32_t)manual_mode_time_mins * 60000u;
         if (current_time - timestamp_cook_start >= man_duration_ms) {

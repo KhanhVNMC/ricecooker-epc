@@ -1,6 +1,7 @@
 #ifndef RICECOOKER_CMATH_H
 #define RICECOOKER_CMATH_H
 #include <stdint.h>
+#include <string.h>
 
 static inline float fsquare(const float x) {
     return x * x;
@@ -10,6 +11,12 @@ static inline uint16_t dcf32u16(const float value, const uint16_t max) {
     if (!(value > 0.0f)) return 0u;
     if (value >= (float)max) return max;
     return (uint16_t) value;
+}
+
+static inline uint32_t ricf32u32(const float value) {
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof(bits));
+    return bits;
 }
 
 static inline uint8_t u8_min(const uint8_t a, const uint8_t b) {

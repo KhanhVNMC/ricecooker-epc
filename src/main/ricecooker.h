@@ -24,7 +24,7 @@ typedef enum : uint8_t {
     COUNT_APP_STATES
 } app_state_t;
 
-typedef enum {
+typedef enum : uint8_t  {
     MODE_RICE_NORMAL, // nau com bth
     MODE_FAST_RICE, // nau com nhanh
     MODE_PORRIDGE, // nau chao

@@ -2,6 +2,8 @@
 #define XTHREADS_H
 #include <stdint.h>
 
+#define BWAIT_TIMED_OUT (0u)
+
 #define critical for (bool _once = (xthreads_csenter(), true); _once; xthreads_csexit(), _once = false)
 #define critical_ret(x) xthreads_csenter(); auto _ret = x; xthreads_csexit(); return _ret
 
@@ -21,8 +23,6 @@ typedef enum : uint8_t {
     XTHREAD_WAIT_ONE,
     XTHREAD_WAIT_ALL,
 } xthread_wait_mode_t;
-
-#define BWAIT_TIMED_OUT (0u)
 
 // from outside the thread
 xthread_handle_t* xthreads_new(
