@@ -513,6 +513,22 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             rc_dbg_led_set(payload[0]);
             goto resp_ack;
         }
+        case CIB_CTL_RESET: {
+            if (payload_size != 0) goto resp_nak;
+            reset_app_state(STATE_IDLE);
+            goto resp_ack;
+        }
+        case CIB_CTL_COOK_PRESET: {
+            if (payload_size != sizeof(uint8_t)) goto resp_nak;
+            const auto mode = (cooking_mode_t)payload[0];
+            if (mode >= MODE_MANUAL_USER) {
+                // do not accept MANUAL and DELAYED
+                goto resp_nak;
+            }
+            cooking_mode = mode;
+            start_cooking_program();
+            goto resp_ack;
+        }
         // unknown command/corrupted commands
         default: goto resp_nak;
     }

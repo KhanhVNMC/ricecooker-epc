@@ -4,9 +4,14 @@
 
 // INBOUND command types
 typedef enum : uint8_t {
-    // INBOUND command types
     CIB_DEBUG_ECHO = 0x0,
     CIB_DEBUG_SET_DLED = 0x1,
+
+    CIB_CTL_RESET = 0x2, // equiv to pressing CANCEL
+    CIB_CTL_SET_BTNS = 0x3, // "remotely" controlling the btns
+    CIB_CTL_COOK_PRESET = 0x4, // jump straight to preset cookin
+    CIB_CTL_COOK_MANUAL = 0x5, // setup manual and cook
+    CIB_CTL_COOK_DELAYED = 0x6, // setup delayed and shit (can tolerate manual)
 } ib_cmd_type_t;
 
 // OUTBOUND response types
@@ -17,7 +22,9 @@ typedef enum : uint8_t {
     RSOB_DEBUG_ECHO = 0x2,
 
     // OUTBOUND asynchronous resp types (MSB set)
-    RAOB_SENSORS_REPORT = 0x0 | (1 << 7)
+    RAOB_FAULTS_REPORT = 0x0 | (1 << 7),
+    RAOB_SENSORS_REPORT = 0x1 | (1 << 7),
+    RAOB_APP_STATE_REPORT = 0x2 | (1 << 7)
 } ob_resp_type_t;
 
 // INBOUND handling
