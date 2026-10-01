@@ -8,6 +8,9 @@
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
 #define TM1637_DIO_PIN      GPIO_PIN_11
+// the sweatshop children shall not eat, esp one in QA, violating
+// official tm1637 timings (if broke set to 10u)
+#define TM1637_DELAY_US     (7u)
 
 #define BTNS_GPIO_PORT      GPIOA
 #define BTN_SELECT_PIN      GPIO_PIN_3
@@ -106,7 +109,7 @@ void rc_init_rchal(void) {
 void rc_tm1637dp_start(void) {
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_SET);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_SET);
-    mt_delay_blocking_us(2);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_RESET);
 }
 
@@ -117,27 +120,27 @@ void rc_tm1637dp_write_byte(uint8_t byte) {
         HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN,
             byte & 0b1 ? GPIO_PIN_SET : GPIO_PIN_RESET // lsb
         );
-        mt_delay_blocking_us(3);
+        mt_delay_blocking_us(TM1637_DELAY_US);
         byte >>= 1;
         HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_SET);
-        mt_delay_blocking_us(3);
+        mt_delay_blocking_us(TM1637_DELAY_US);
     }
     // ignore the ACK but gives the 9th clock cycle anyway
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_RESET);
-    mt_delay_blocking_us(5);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_SET);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_SET);
-    mt_delay_blocking_us(2);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_RESET);
 }
 
 void rc_tm1637dp_stop(void) {
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_RESET);
-    mt_delay_blocking_us(2);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_RESET);
-    mt_delay_blocking_us(2);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN, GPIO_PIN_SET);
-    mt_delay_blocking_us(2);
+    mt_delay_blocking_us(TM1637_DELAY_US);
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_DIO_PIN, GPIO_PIN_SET);
 }
 
