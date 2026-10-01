@@ -670,30 +670,42 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
 static const cooking_profile_t *active_profile = nullptr;
 static uint8_t active_stage_idx = 0;
 static uint32_t timestamp_stage_start = 0;
-static float stage_start_pot_temp = 0.0f; // the pot temp at stage entry
 
-// TODO questionable
-static float get_stage_program_temp(
-    const float stage_start_temp,
-    const cooking_stage_t *stage,
-    const uint32_t stage_elapsed_ms
-) {
-    const float target_temp = stage->target_pot_temp;
-    const float ramp_rate = stage->ramp_rate_per_min;
-
-    if (ramp_rate == 0.0f) {
-        return target_temp;
+static float get_stage_program_temp(const cooking_stage_t *stage, const uint32_t elapsed_ms) {
+    if (stage->temp_point_count == 0u) {
+        return 0.0f;
     }
 
-    const uint32_t elapsed_minutes = stage_elapsed_ms / 60000u;
-    const float program_temp = stage_start_temp + ramp_rate * (float)elapsed_minutes;
-
-    if ((ramp_rate > 0.0f && program_temp >= target_temp) ||
-        (ramp_rate < 0.0f && program_temp <= target_temp)) {
-        return target_temp;
+    const temp_point_t *points = stage->temp_points;
+    if (elapsed_ms <= points[0].t_stage_in_mins * 60000u) {
+        return points[0].temp;
     }
-    return program_temp;
+
+    for (uint8_t i = 1u; i < stage->temp_point_count; ++i) {
+        const uint32_t end_time_ms = points[i].t_stage_in_mins * 60000u;
+        if (elapsed_ms <= end_time_ms) {
+            const uint32_t start_time_ms = points[i - 1u].t_stage_in_mins * 60000u;
+            const float progress = (float)(elapsed_ms - start_time_ms) / (float)(end_time_ms - start_time_ms);
+            return points[i - 1u].temp + progress * (points[i].temp - points[i - 1u].temp);
+        }
+    }
+
+    return points[stage->temp_point_count - 1u].temp;
 }
+
+static float get_stage_program_slope_per_min(const cooking_stage_t *stage, const uint32_t elapsed_ms) {
+    for (uint8_t i = 1u; i < stage->temp_point_count; ++i) {
+        const uint32_t end_time_ms = stage->temp_points[i].t_stage_in_mins * 60000u;
+        if (elapsed_ms <= end_time_ms) {
+            const temp_point_t *start = &stage->temp_points[i - 1u];
+            const temp_point_t *end = &stage->temp_points[i];
+            const uint32_t duration_mins = end->t_stage_in_mins - start->t_stage_in_mins;
+            return (end->temp - start->temp) / (float)duration_mins;
+        }
+    }
+    return 0.0f;
+}
+
 
 void start_task_cooking_now(void) {
     if (cooking_mode == MODE_HOLD_WARM) {
@@ -727,13 +739,9 @@ void start_task_cooking_now(void) {
 
     // setup the initial stage
     timestamp_stage_start = app_current_time();
-    stage_start_pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
 
-    // TODO questionable
     const cooking_stage_t *first_stage = &active_profile->stages[0];
-    const float program_temp = get_stage_program_temp(
-        stage_start_pot_temp, first_stage, 0u
-    );
+    const float program_temp = get_stage_program_temp(first_stage, 0u);
     heater_set_target_pot_temp(program_temp);
     heater_set_enabled(true);
 }
@@ -756,9 +764,7 @@ void on_cooking_pltick(const uint32_t current_time) {
     const uint32_t stage_elapsed_ms = current_time - timestamp_stage_start;
     const float actual_pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
 
-    const float target_program_temp = get_stage_program_temp(
-        stage_start_pot_temp, current_stage, stage_elapsed_ms
-    );
+    const float target_program_temp = get_stage_program_temp(current_stage, stage_elapsed_ms);
     heater_set_target_pot_temp(target_program_temp);
 
     bool advance_stage = false;
@@ -782,7 +788,7 @@ void on_cooking_pltick(const uint32_t current_time) {
             // timeout
             const float slope = tempstats_linreg_slope();
             const bool min_boil_time_met = stage_elapsed_ms >= 1u * 60u * 1000u;
-            const float program_slope = current_stage->ramp_rate_per_min / 60.0f;
+            const float program_slope = get_stage_program_slope_per_min(current_stage, stage_elapsed_ms) / 60.0f;
 
             if (actual_pot_temp >= current_stage->temp_threshold ||
                 (min_boil_time_met && slope >= (program_slope * 1.1f) && actual_pot_temp >= 100.0f) ||
@@ -802,7 +808,6 @@ void on_cooking_pltick(const uint32_t current_time) {
             return;
         }
         // setup the next stage
-        stage_start_pot_temp = rc_sensor_get_temp(RC_SENSOR_POT);
         timestamp_stage_start = current_time;
     }
 }
