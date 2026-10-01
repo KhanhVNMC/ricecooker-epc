@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(ricecooker_stm32c8 LANGUAGES C ASM)
+project(ricecooker_stm32f1c8 LANGUAGES C ASM)
 
 add_subdirectory(../../src "${CMAKE_CURRENT_BINARY_DIR}/ricecooker_core") # build the ricecooker_core
 find_package(Threads REQUIRED)

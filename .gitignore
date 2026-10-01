@@ -2,8 +2,7 @@ artifacts/
 cmake-build-debug
 build/
 bin/
-.idea/editor.xml
-.idea/ricecooker.iml
+.idea
 Project Backups
 *.workspace
 .vscode
