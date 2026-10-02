@@ -12,7 +12,7 @@
 #define THERMISTOR_HEADROOM                 (4.f)
 
 #define HEATER_WATCHDOG_INTERVAL_MS         (5000)
-#define HEATERCTL_INTERVAL_MS               (25) // ms
+#define HEATERCTL_INTERVAL_MS               (25u) // ms
 
 static heater_faults_t heater_ctl_faults = 0;
 

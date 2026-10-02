@@ -12,13 +12,14 @@ typedef enum : uint8_t {
     CIB_DEBUG_SET_DLED = 0x1,
 
     CIB_CTL_RESET = 0x2, // equiv to pressing CANCEL
-    CIB_CTL_PRESS_BTNS = 0x3, // "remotely" controlling the btns
+    CIB_CTL_SYSCONFIG = 0x3, // misc system config
+    CIB_CTL_PRESS_BTNS = 0x4, // "remotely" controlling the btns
 
-    CIB_CTL_COOK_PRESET = 0x4, // jump straight to preset cookin
-    CIB_CTL_COOK_MANUAL = 0x5, // setup manual and cook
-    CIB_CTL_COOK_DELAYED = 0x6, // setup delayed and shit (can tolerate manual)
+    CIB_CTL_COOK_PRESET = 0x5, // jump straight to preset cookin
+    CIB_CTL_COOK_MANUAL = 0x6, // setup manual and cook
+    CIB_CTL_COOK_DELAYED = 0x7, // setup delayed and shit (can tolerate manual)
 
-    CIB_GET_APP_STATE_REPORT = 0x7, // state, selected cooking mode, delay/manual etc etc
+    CIB_GET_APP_STATE_REPORT = 0x8, // state, selected cooking mode, delay/manual etc etc
 } ib_cmd_type_t;
 
 // OUTBOUND response types

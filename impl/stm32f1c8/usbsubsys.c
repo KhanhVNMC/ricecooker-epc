@@ -289,17 +289,32 @@ __attribute__((optimize(0)))
 #endif
 bool ecc_init_stack(void) {
     usb_initialized = false;
+    // DIRTY LITTLE HACK: force USB reenumeration by stealing A12 (D+ of usb)
+    // for 10ms and pull it low so the host request enumeration again when we return it to usb
+    GPIO_InitTypeDef gpio = {0};
+    gpio.Pin = GPIO_PIN_12;
+    gpio.Mode = GPIO_MODE_OUTPUT_OD;
+    gpio.Pull = GPIO_NOPULL;
+    gpio.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(GPIOA, &gpio);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+    HAL_Delay(10);
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_12);
+
     // initialize generic USB protocol machinery
     if (USBD_Init(&usb_device, &usb_descriptors, 0U) != USBD_OK) {
         return false;
     }
+
     // make this USB device a CDC device (emulating a COM port)
     if (USBD_RegisterClass(&usb_device, &USBD_CDC) != USBD_OK) {
         return false;
     }
+
     if (USBD_CDC_RegisterInterface(&usb_device, &cdc_callback_funcs) != USBD_OK) {
         return false;
     }
+
     return usb_initialized = (USBD_Start(&usb_device) == USBD_OK); // start hardware and begin enumeration
 }
 

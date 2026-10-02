@@ -10,7 +10,7 @@
 #include "include/ecclayer.h"
 #include "include/lrcmdctl.h"
 
-#define APP_MAIN_INTERVAL_MS        (16)
+#define APP_MAIN_INTERVAL_MS        (20u)
 #define APP_BLINK_INTERVAL_MS       (500u)
 
 #define APP_ANIM_FRAME_FAST_MS      (200u)
@@ -98,8 +98,9 @@ static bool config_time_edit_minutes;
 // error detection policy & shit
 static uint8_t system_error_code;
 
-// masks & shit
+// physical button tracking & shit
 static bitmask8_t last_input_mask = 0;
+static bool phys_input_disabled = false;
 
 void start_cooking_program(void); // honor configured delay
 void start_task_cooking_now(void); // enter STATE_COOKING immediately
@@ -523,16 +524,18 @@ void on_platform_tick(void) {
         lrcmdctl_ib_release();
     }
     // physical input handling
-    const bitmask8_t current_inp_mask = rc_buttons_get_state();
-    if (last_input_mask != current_inp_mask) {
-        // current && !last
-        // only fire event on btn press (not release)
-        const bitmask8_t changed = current_inp_mask & ~last_input_mask;
-        if (changed) {
-            buzzer_play_beep();
-            app_on_btns_press(changed);
+    if (!phys_input_disabled) {
+        const bitmask8_t current_inp_mask = rc_buttons_get_state();
+        if (last_input_mask != current_inp_mask) {
+            // current && !last
+            // only fire event on btn press (not release)
+            const bitmask8_t changed = current_inp_mask & ~last_input_mask;
+            if (changed) {
+                buzzer_play_beep();
+                app_on_btns_press(changed);
+            }
+            last_input_mask = current_inp_mask;
         }
-        last_input_mask = current_inp_mask;
     }
     // update output
     update_rc_display();
@@ -753,6 +756,12 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             reset_app_state(STATE_IDLE);
             goto resp_ack;
         }
+        case CIB_CTL_SYSCONFIG: {
+            // [configuration bitfield: 1]
+            if (payload_size != 1) goto resp_nak;
+            phys_input_disabled = (payload[0] & 0b1) != 0; // LSB = 1 == disable
+            goto resp_ack;
+        }
         case CIB_CTL_PRESS_BTNS: {
             // [button mask: 1]
             if (payload_size != 1) goto resp_nak;
@@ -830,7 +839,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             const uint8_t report[] = {
                 heater_get_faults(), system_error_code, // should be 0, 0 if healthy
                 app_state, cooking_mode, // state & cooking mode
-                last_input_mask, // last tick's physical input mask
+                phys_input_disabled, last_input_mask, // physical input info
                 UNPACK_U32_BE(app_current_time()), // app clock
                 UNPACK_U32_BE(timestamp_cook_start), // nonsensical if state != cooking
                 UNPACK_U32_BE(timestamp_delayed_start), // nonsensical if state != delayed
