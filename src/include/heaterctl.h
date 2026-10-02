@@ -18,6 +18,8 @@ bool heater_is_enabled(void);
 heater_faults_t heater_get_faults(void);
 void heater_clear_faults(void);
 
+float heater_read_cached_sensor(rc_temp_sensor_t sensor);
+
 void task_heater_update_thread(void *args);
 
 #endif //RICECOOKER_HEATERCTL_H

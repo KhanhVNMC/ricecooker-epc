@@ -3,6 +3,22 @@
 #include <stdint.h>
 #include <string.h>
 
+// https://en.wikipedia.org/wiki/Linear_interpolation
+static inline float flerp(const float v0, const float v1, const float t) {
+    return (1 - t) * v0 + t * v1;
+}
+
+union f32u32u {
+    float f; uint32_t i;
+}; // diabolical
+
+static inline float fabsf(const float x) {
+    union f32u32u shit;
+    shit.f = x;
+    shit.i &= 0x7FFFFFFF;
+    return shit.f;
+}
+
 static inline float fsquare(const float x) {
     return x * x;
 }
@@ -14,9 +30,9 @@ static inline uint16_t dcf32u16(const float value, const uint16_t max) {
 }
 
 static inline uint32_t ricf32u32(const float value) {
-    uint32_t bits;
-    memcpy(&bits, &value, sizeof(bits));
-    return bits;
+    union f32u32u shit;
+    shit.f = value;
+    return shit.i;
 }
 
 static inline uint8_t u8_min(const uint8_t a, const uint8_t b) {

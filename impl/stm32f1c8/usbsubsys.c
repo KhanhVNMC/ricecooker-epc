@@ -261,7 +261,7 @@ static uint8_t* usb_get_lang_id_descriptor(USBD_SpeedTypeDef speed, uint16_t *le
 }
 
 static uint8_t* usb_get_manufacturer_string(USBD_SpeedTypeDef, uint16_t *length) {
-    USBD_GetString((uint8_t*) "Nha may Z111", usb_string_buf, length);
+    USBD_GetString((uint8_t*) "Z111 Factory", usb_string_buf, length);
     return usb_string_buf;
 }
 

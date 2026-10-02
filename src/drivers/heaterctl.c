@@ -12,12 +12,14 @@
 #define THERMISTOR_HEADROOM                 (4.f)
 
 #define HEATER_WATCHDOG_INTERVAL_MS         (5000)
-#define HEATERCTL_INTERVAL_MS               (50) // ms
+#define HEATERCTL_INTERVAL_MS               (25) // ms
 
 static heater_faults_t heater_ctl_faults = 0;
 
 static float heater_pot_temp_target = 0;
 static bool heater_element_enabled = false;
+
+static float cached_sensors_data[COUNT_RC_SENSORS];
 
 static uint32_t heater_wd_last_timestamp = 0;
 static float heater_wd_last_elem_tmp = 0;
@@ -47,8 +49,16 @@ void heater_clear_faults(void) {
     critical heater_ctl_faults = 0x0;
 }
 
+float heater_read_cached_sensor(const rc_temp_sensor_t sensor) {
+    return cached_sensors_data[sensor];
+}
+
 void task_heater_update_thread(void *args) {
     while (1) {
+        // cache here so other threads can read w/o contention
+        cached_sensors_data[RC_SENSOR_POT] = rc_sensor_get_temp(RC_SENSOR_POT);
+        cached_sensors_data[RC_SENSOR_HEATER] = rc_sensor_get_temp(RC_SENSOR_HEATER);
+
         xthreads_csenter(); // critical section
         const bool local_heater_enabled = heater_element_enabled;
         const float local_pot_target_temp = heater_pot_temp_target;
@@ -62,8 +72,8 @@ void task_heater_update_thread(void *args) {
             continue;
         }
 
-        const float heater_tmp = rc_sensor_get_temp(RC_SENSOR_HEATER);
-        const float pot_tmp = rc_sensor_get_temp(RC_SENSOR_POT);
+        const float heater_tmp = cached_sensors_data[RC_SENSOR_HEATER];
+        const float pot_tmp = cached_sensors_data[RC_SENSOR_POT];
         const uint32_t current_time = rc_time_current_millis();
         const bool heater_currently_on = rc_heater_is_on();
 
