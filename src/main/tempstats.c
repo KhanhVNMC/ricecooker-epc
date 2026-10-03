@@ -14,6 +14,11 @@ bool tempstats_is_full(void) {
     return rb_fill_size == SAMPLES_RETENTION_SIZE;
 }
 
+// max is SAMPLES_RETENTION_SIZE
+uint8_t tempstats_sample_size(void) {
+    return rb_fill_size;
+}
+
 void tempstats_collect_sample(const float temp) {
     tmp_ringbuf[rb_head] = temp;
     rb_head = (rb_head + 1) % SAMPLES_RETENTION_SIZE;

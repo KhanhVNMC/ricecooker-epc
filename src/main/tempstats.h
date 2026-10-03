@@ -6,6 +6,7 @@
 
 void tempstats_reset(void);
 bool tempstats_is_full(void);
+uint8_t tempstats_sample_size(void);
 
 void tempstats_collect_sample(float temp);
 float tempstats_get_at(uint8_t i);

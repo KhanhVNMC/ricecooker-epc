@@ -89,7 +89,7 @@ static bool     delayed_mode_configured; // true if ready to select mode
 // timestamps
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
-static uint32_t timestamp_tempstats_last_sample; // temp sample
+static uint32_t timestamp_last_pot_temp_sample; // temp sample
 static uint32_t timestamp_pot_temp_display_start; // cosmetic
 
 // for time cfg states, like manual or delay time
@@ -145,7 +145,7 @@ void reset_app_state(const app_state_t reset_to) {
     timestamp_cook_start = 0;
     timestamp_delayed_start = 0;
     timestamp_pot_temp_display_start = 0;
-    timestamp_tempstats_last_sample = 0;
+    timestamp_last_pot_temp_sample = 0;
 }
 
 void app_on_btns_press(const bitmask8_t pressed) {
@@ -472,13 +472,13 @@ static void watchdog_platform_tick(const uint32_t current_time) {
         return;
     }
     // collect pot temp every second
-    if (current_time - timestamp_tempstats_last_sample >= 1000u) {
+    if (current_time - timestamp_last_pot_temp_sample >= 1000u) {
         const float pot_temp = heater_read_cached_sensor(RC_SENSOR_POT);
         const float element_temp = heater_read_cached_sensor(RC_SENSOR_HEATER);
 
         // for temp statistics
         tempstats_collect_sample(pot_temp);
-        timestamp_tempstats_last_sample = current_time;
+        timestamp_last_pot_temp_sample = current_time;
 
         // report to ecc layer
         if (ecc_is_layer_ready()) {
@@ -565,6 +565,7 @@ static bool has_water_boiled_away(void) {
     if (!tempstats_is_full()) {
         return false;
     }
+    // statistics from the pot, not the heater
     const float avg_temp = tempstats_get_avg();
     const float linreg_slope = tempstats_linreg_slope();
 
@@ -836,6 +837,8 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
         }
         case CIB_GET_APP_STATE_REPORT: {
             if (payload_size != 0) goto resp_nak;
+            const uint32_t ts_avg_bits = ricf32u32(tempstats_get_avg());
+            const uint32_t ts_linreg_bits = ricf32u32(tempstats_linreg_slope());
             const uint8_t report[] = {
                 heater_get_faults(), system_error_code, // should be 0, 0 if healthy
                 app_state, cooking_mode, // state & cooking mode
@@ -849,8 +852,8 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
                 delayed_mode_configured, UNPACK_U16_BE(delayed_mode_time_mins),
                 // detailed cooking data (could be nonsensical)
                 active_stage_idx, stage_setpoint_index, UNPACK_U32_BE(timestamp_stage_start),
-                boil_plateau_seen, UNPACK_U32_BE(ricf32u32(tempstats_get_avg())),
-                UNPACK_U32_BE(ricf32u32(tempstats_linreg_slope()))
+                boil_plateau_seen, tempstats_sample_size(), // should be enough
+                UNPACK_U32_BE(ts_avg_bits), UNPACK_U32_BE(ts_linreg_bits)
             };
             return lrcmdctl_ob_send(RSOB_APP_STATE_REPORT, report, sizeof(report));
         }
