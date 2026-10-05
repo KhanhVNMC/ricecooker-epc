@@ -5,7 +5,8 @@
 #define HEATER_ELEMENT_SAFETY_CEILING       (250)
 #define HEATER_POT_SAFETY_CEILING           (140) // deg C
 
-#define WD_COUPLING_DIVERGENCE_THRES        (15) // what the f is this name
+#define WD_ELEMENT_RISE_THRESHOLD           (15) // what the f is this name
+#define WD_POT_DROP_THRESHOLD               (15) // still
 
 #define ALLOWED_POT_MIN_TEMP                (-10.f)
 #define ALLOWED_POT_MAX_TEMP                (250.f)
@@ -102,8 +103,8 @@ void task_heater_update_thread(void *args) {
             if (!heater_should_stop) {
                 // sometimes i want to fucking kill myself
                 // this is just retarded
-                if (heater_delta > WD_COUPLING_DIVERGENCE_THRES
-                    && pot_delta < -WD_COUPLING_DIVERGENCE_THRES
+                if (heater_delta > WD_ELEMENT_RISE_THRESHOLD
+                    && pot_delta < -WD_POT_DROP_THRESHOLD
                 ) {
                     rc_heater_set(false); // emergency off
                     critical {
