@@ -14,7 +14,7 @@ union f32u32u {
     float f; uint32_t i;
 }; // diabolical
 
-static inline float fabs(const float x) {
+static inline float f32abs(const float x) {
     union f32u32u shit;
     shit.f = x;
     shit.i &= 0x7FFFFFFF;
@@ -49,16 +49,16 @@ static inline uint8_t u8_clamp(const uint8_t x, const uint8_t lo, const uint8_t 
     return u8_min(hi, u8_max(x, lo));
 }
 
-static inline float fmin(const float a, const float b) {
+static inline float f32min(const float a, const float b) {
     return a < b ? a : b;
 }
 
-static inline float fmax(const float a, const float b) {
+static inline float f32max(const float a, const float b) {
     return a > b ? a : b;
 }
 
 static inline float fclampf(const float x, const float lo, const float hi) {
-    return fmin(hi, fmax(x, lo));
+    return f32min(hi, f32max(x, lo));
 }
 
 #endif //RICECOOKER_CMATH_H

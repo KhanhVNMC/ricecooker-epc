@@ -28,7 +28,7 @@
 #define DBG_LED_GPIO_PORT   GPIOC
 #define DBG_LED_PIN         GPIO_PIN_13
 
-#define NTC_R_REF           (10000.0f)
+#define NTC_R_REF           (12000.0f)
 #define NTC_R0              (100000.0f)
 #define NTC_TO_KELVIN       (298.15f)
 #define NTC_BETA            (3950.0f)
@@ -43,6 +43,13 @@ void rc_init_rchal(void) {
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE(); // ADC pins
+
+    // buttons config (pulldown)
+    GPIO_InitTypeDef btns_conf = {0};
+    btns_conf.Pin = BTN_SELECT_PIN | BTN_CANCEL_PIN | BTN_OPTIONS_PIN | BTN_INCR_PIN | BTN_DECR_PIN;
+    btns_conf.Mode = GPIO_MODE_INPUT;
+    btns_conf.Pull = GPIO_PULLDOWN;
+    HAL_GPIO_Init(BTNS_GPIO_PORT, &btns_conf);
 
     // TM1637 DIO/CLK pins config
     HAL_GPIO_WritePin(TM1637_GPIO_PORT, TM1637_CLK_PIN | TM1637_DIO_PIN, GPIO_PIN_SET); // normalize first

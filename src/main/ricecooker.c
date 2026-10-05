@@ -572,7 +572,7 @@ static bool has_water_boiled_away(void) {
     if (!boil_plateau_seen) {
         // boiling plateau has a specific characteristic (needs experiment)
         if (avg_temp >= WATER_BOIL_PLATEAU_MIN_TEMP
-          && fabs(linreg_slope) <= WATER_BOIL_PLATEAU_MAX_ABS_SLOPE
+          && f32abs(linreg_slope) <= WATER_BOIL_PLATEAU_MAX_ABS_SLOPE
         ) {
             boil_plateau_seen = true;
         }
