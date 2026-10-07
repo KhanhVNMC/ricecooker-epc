@@ -42,6 +42,7 @@ static constexpr bitmask8_t digit_to_dp_matrix[] = {
     /*L*/                                  RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*Y*/            RC_SEG_B | RC_SEG_C | RC_SEG_D |            RC_SEG_F | RC_SEG_G,
     /*N*/ RC_SEG_A | RC_SEG_B | RC_SEG_C |            RC_SEG_E | RC_SEG_F           ,
+    /*G*/ RC_SEG_A |            RC_SEG_C | RC_SEG_D | RC_SEG_E | RC_SEG_F           ,
     /*°*/ RC_SEG_A | RC_SEG_B |                                  RC_SEG_F | RC_SEG_G,
 };
 
@@ -61,9 +62,16 @@ void display_set_brightness(const uint8_t brightness) {
     rc_tm1637dp_stop();
 }
 
-// cache
+// display cache
 static bool cache_valid = false;
 static bitmask8_t last_digit_masks[4];
+
+// scrolling stuff
+static bool scroll_mode_active;
+static const digit_t *sc_buffer;
+static uint8_t sc_buffer_size;
+static bool sc_display_colon;
+static uint8_t sc_window_start;
 
 static bool should_send_update(const bitmask8_t digit_bitmasks[4]) {
     if (!cache_valid) return true;
@@ -86,17 +94,7 @@ static void digits_to_bitmasks(bitmask8_t *out, const digit_t digits[4], const b
     }
 }
 
-void display_set_characters(const digit_t digits[4], const bool colon) {
-    bitmask8_t out_masks[4] = {0};
-    digits_to_bitmasks(out_masks, digits, colon);
-    display_send_raw_segments(out_masks);
-}
-
-void display_clear_cache(void) {
-    cache_valid = false;
-}
-
-void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
+static void send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
     // prevent bus spamming
     if (!should_send_update(digit_bitmasks)) {
         return;
@@ -119,6 +117,64 @@ void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
 
     // cache is now valid
     cache_valid = true;
+}
+
+static void set_characters(const digit_t digits[4], const bool colon) {
+    bitmask8_t out_masks[4] = {0};
+    digits_to_bitmasks(out_masks, digits, colon);
+    send_raw_segments(out_masks);
+}
+
+static void reset_scroll_context() {
+    scroll_mode_active = false;
+    sc_buffer = nullptr;
+    sc_buffer_size = 0;
+    sc_display_colon = false;
+    sc_window_start = 0;
+}
+
+void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]) {
+    reset_scroll_context();
+    send_raw_segments(digit_bitmasks);
+}
+
+void display_set_characters(const digit_t digits[4], const bool colon) {
+    reset_scroll_context();
+    set_characters(digits, colon);
+}
+
+void display_set_scrolling_chars(const digit_t *buf, const uint8_t length, const bool colon) {
+    if (buf == nullptr || length == 0) {
+        return;
+    }
+    // this allows this func to be called repeatedly
+    if (buf == sc_buffer && length == sc_buffer_size && colon == sc_display_colon) {
+        return;
+    }
+    // if buf is pointed at a stack local, it'll explode
+    sc_buffer = buf;
+    sc_buffer_size = length;
+    sc_display_colon = colon;
+    sc_window_start = 0;
+    scroll_mode_active = true;
+}
+
+void display_scroll_tick(void) {
+    if (!scroll_mode_active || sc_buffer == nullptr) {
+        return;
+    }
+    digit_t digits[4] = {0};
+    for (uint8_t i = 0; i < 4; i++) {
+        // this is a sliding window w/ modulo
+        // bstart = 6; bsize = 4 -> 7 % 4 = 3
+        digits[i] = sc_buffer[(sc_window_start + i) % sc_buffer_size];
+    }
+    set_characters(digits, sc_display_colon);
+    sc_window_start++;
+}
+
+void display_clear_cache(void) {
+    cache_valid = false;
 }
 
 void display_normalize_segments(void) {

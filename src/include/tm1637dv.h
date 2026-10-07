@@ -31,7 +31,8 @@ typedef enum : uint8_t {
     CHAR_L = 24,
     CHAR_Y = 25,
     CHAR_N = 26,
-    SCHAR_DEG = 27,
+    CHAR_G = 27,
+    SCHAR_DEG = 28,
     CHAR_NULL = 0xFF,
 } digit_t;
 
@@ -41,5 +42,7 @@ void display_set_characters(const digit_t digits[4], bool colon);
 void display_clear_cache(void);
 void display_send_raw_segments(const bitmask8_t digit_bitmasks[4]);
 void display_normalize_segments(void);
+void display_scroll_tick(void);
+void display_set_scrolling_chars(const digit_t *buf, uint8_t length, bool colon);
 
 #endif //TM1637DV_H

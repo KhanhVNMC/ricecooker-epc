@@ -10,29 +10,34 @@
 #include "include/ecclayer.h"
 #include "include/lrcmdctl.h"
 
-#define APP_MAIN_INTERVAL_MS        (20u)
-#define APP_BLINK_INTERVAL_MS       (500u)
+#define APP_MAIN_INTERVAL_MS         (20u)
+#define APP_BLINK_INTERVAL_MS        (500u)
+#define APP_SCROLL_INTERVAL_MS       (500u)
 
-#define APP_ANIM_FRAME_FAST_MS      (200u)
-#define APP_ANIM_FRAME_NORMAL_MS    (250u)
-#define APP_ANIM_FRAME_SOFT_MS      (300u)
+#define APP_ANIM_FRAME_FAST_MS       (200u)
+#define APP_ANIM_FRAME_NORMAL_MS     (250u)
+#define APP_ANIM_FRAME_SOFT_MS       (300u)
 
-#define APP_TEMP_SHOW_DURATION_MS   (3000u)
-#define APP_DISPLAY_ALTERNATE_MS    (5000u)
+#define APP_TEMP_SHOW_DURATION_MS    (3000u)
+#define APP_DISPLAY_ALT_DELAYING_MS  (6000u) // ALT = alternating
+#define APP_DISPLAY_ALT_MANUAL_MS    (5000u)
 
-#define CONFIG_TIME_MINUTES_STEP    (1)
-#define CONFIG_TEMP_STEP            (5)
-#define DEFAULT_MANUAL_MODE_TIME    (30)
-#define DEFAULT_MANUAL_MODE_TEMP    (80)
-#define DEFAULT_DELAYED_MODE_TIME   (15)
-#define MIN_CONFIG_TIME_MINS        (1)
-#define MAX_CONFIG_TIME_MINS        (99u * 60 + 59u)
-#define MIN_CONFIG_TEMP             (60)
-#define MAX_CONFIG_TEMP             (105)
+#define CONFIG_TIME_MINUTES_STEP     (1)
+#define CONFIG_TEMP_STEP             (5)
+#define DEFAULT_MANUAL_MODE_TIME     (30)
+#define DEFAULT_MANUAL_MODE_TEMP     (80)
+#define DEFAULT_DELAYED_MODE_TIME    (15)
+#define MIN_CONFIG_TIME_MINS         (1)
+#define MAX_CONFIG_TIME_MINS         (99u * 60 + 59u)
+#define MIN_CONFIG_TEMP              (60)
+#define MAX_CONFIG_TEMP              (105)
 
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
 static constexpr digit_t IDLE[4] = {CHAR_I, CHAR_D, CHAR_L, CHAR_E};
+// extended (via scroll)
+static constexpr digit_t EXT_HOLDING[] = {CHAR_H, CHAR_O, CHAR_L, CHAR_D, CHAR_I, CHAR_N, CHAR_G, CHAR_NULL};
+static constexpr digit_t EXT_DELAYING[] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_D, CHAR_E, CHAR_L, CHAR_A, CHAR_Y, CHAR_I, CHAR_N, CHAR_G, CHAR_NULL};
 
 static constexpr digit_t mode_to_digits[][4] = {
     [MODE_RICE_NORMAL] = {CHAR_R, CHAR_I, CHAR_C, CHAR_E},
@@ -90,6 +95,7 @@ static bool     delayed_mode_configured; // true if ready to select mode
 static uint32_t timestamp_cook_start;
 static uint32_t timestamp_delayed_start;
 static uint32_t timestamp_last_pot_temp_sample; // temp sample
+static uint32_t timestamp_last_display_sc_tick; // for display scrolling
 static uint32_t timestamp_pot_temp_display_start; // cosmetic
 
 // for time cfg states, like manual or delay time
@@ -146,6 +152,7 @@ void reset_app_state(const app_state_t reset_to) {
     timestamp_delayed_start = 0;
     timestamp_pot_temp_display_start = 0;
     timestamp_last_pot_temp_sample = 0;
+    timestamp_last_display_sc_tick = 0;
 }
 
 void app_on_btns_press(const bitmask8_t pressed) {
@@ -297,7 +304,7 @@ void update_rc_display(void) {
             }
 
             // SHOW TIME LEFT: for manual mode every X sec (from cooking start)
-            if (cooking_mode == MODE_MANUAL_USER && ((current_time - timestamp_cook_start) / APP_DISPLAY_ALTERNATE_MS) & 1u) {
+            if (cooking_mode == MODE_MANUAL_USER && ((current_time - timestamp_cook_start) / APP_DISPLAY_ALT_MANUAL_MS) & 1u) {
                 const uint32_t duration_ms = manual_mode_time_mins * 60000u;
                 app_display_countdown(blink,
                     ((timestamp_cook_start + duration_ms) - current_time) / 1000u
@@ -323,15 +330,15 @@ void update_rc_display(void) {
         }
         case STATE_DELAYED_COUNTDOWN: {
             // SHOW TIME LEFT: for delayed mode every X sec (from delay start)
-            if (((current_time - timestamp_delayed_start) / APP_DISPLAY_ALTERNATE_MS) & 1u) {
+            if (((current_time - timestamp_delayed_start) / APP_DISPLAY_ALT_DELAYING_MS) & 1u) {
                 const uint32_t duration_ms = delayed_mode_time_mins * 60000u;
                 app_display_countdown(blink,
                     ((timestamp_delayed_start + duration_ms) - current_time) / 1000u
                 );
                 break;
             }
-            // SHOW "DLAY" in between
-            display_set_characters(mode_to_digits[MODE_DELAYED_EXEC], false);
+            // SHOW "DELAYING" (scrollin') in between
+            display_set_scrolling_chars(EXT_DELAYING, sizeof(EXT_DELAYING), false);
             break;
         }
         case STATE_CF_MANUAL_TEMP: {
@@ -368,7 +375,7 @@ void update_rc_display(void) {
             break;
         }
         case STATE_HOLD_WARM: {
-            display_set_characters(mode_to_digits[MODE_HOLD_WARM], false);
+            display_set_scrolling_chars(EXT_HOLDING, sizeof(EXT_HOLDING), false);
             break;
         }
         default: break; // prevent complaining
@@ -539,6 +546,11 @@ void on_platform_tick(void) {
     }
     // update output
     update_rc_display();
+    // scroll tick states are mutable from update_rc_display, so call this after
+    if (current_time - timestamp_last_display_sc_tick >= APP_SCROLL_INTERVAL_MS) {
+        display_scroll_tick();
+        timestamp_last_display_sc_tick = current_time;
+    }
 }
 
 //// APPLICATION COOKING/COOKING PROFILE LOGIC /////
