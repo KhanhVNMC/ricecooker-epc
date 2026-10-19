@@ -8,3 +8,4 @@ Project Backups
 .vscode
 .clangd
 note.txt
+*_ignored/

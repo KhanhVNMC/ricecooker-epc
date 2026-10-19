@@ -2,14 +2,15 @@
 #include "include/cmath.h"
 #include "include/xthreads.h"
 
-#define HEATER_ELEMENT_SAFETY_CEILING       (250)
-#define HEATER_POT_SAFETY_CEILING           (140) // deg C
+#define HEATER_ELEMENT_MAX_SAFETY_CEILING   (250.f)
+#define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
+#define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
-#define WD_ELEMENT_RISE_THRESHOLD           (15) // what the f is this name
-#define WD_POT_DROP_THRESHOLD               (15) // still
+#define WD_ELEMENT_RISE_THRESHOLD           (15.f) // what the f is this name
+#define WD_POT_DROP_THRESHOLD               (15.f) // still
 
-#define ALLOWED_POT_MIN_TEMP                (-10.f)
-#define ALLOWED_POT_MAX_TEMP                (250.f)
+#define ALLOWED_POT_MIN_TEMP                (10.f)
+#define ALLOWED_POT_MAX_TEMP                (200.f)
 #define THERMISTOR_HEADROOM                 (4.f)
 
 #define HEATER_WATCHDOG_INTERVAL_MS         (5000)
@@ -82,14 +83,28 @@ void task_heater_update_thread(void *args) {
         const bool heater_should_stop = pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM;
 
         // overheat protection (element)
-        const bool element_overheat = heater_tmp >= HEATER_ELEMENT_SAFETY_CEILING;
-        const bool pot_overheat = pot_tmp >= HEATER_POT_SAFETY_CEILING;
+        const bool element_overheat = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;
+        const bool pot_overheat = pot_tmp >= HEATER_POT_MAX_SAFETY_CEILING;
 
         if (element_overheat || pot_overheat) {
             rc_heater_set(false); // emergency off
             critical {
                 if (element_overheat) heater_ctl_faults |= HEATER_ELEMENT_OVERHEAT_FAULT;
                 if (pot_overheat)     heater_ctl_faults |= HEATER_POT_OVERHEAT_FAULT;
+                heater_element_enabled = false; // just to be sure
+            }
+            goto proc_end;
+        }
+
+        // severe "underheat" (could be rouge sensor) protection
+        const bool element_underheat = heater_tmp <= GLOBAL_MIN_SAFETY_CEILING;
+        const bool pot_underheat = pot_tmp <= GLOBAL_MIN_SAFETY_CEILING;
+
+        if (element_underheat || pot_underheat) {
+            rc_heater_set(false); // emergency off
+            critical {
+                if (element_underheat) heater_ctl_faults |= HEATER_ELEMENT_UNDERHEAT_FAULT;
+                if (pot_underheat)     heater_ctl_faults |= HEATER_POT_UNDERHEAT_FAULT;
                 heater_element_enabled = false; // just to be sure
             }
             goto proc_end;

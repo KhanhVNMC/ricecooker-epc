@@ -467,13 +467,14 @@ static void faults_report_to_ecc(const uint8_t metadata) {
 }
 
 static void watchdog_platform_tick(const uint32_t current_time) {
-    // watchdog for heater faults (error code 2x)
+    // watchdog for heater faults (error code 33 -> 63)
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
-        system_error_code = 20; // base heater error code
-        if (hfaults & HEATER_ELEMENT_OVERHEAT_FAULT) system_error_code += 2; // code 22
-        if (hfaults & HEATER_POT_OVERHEAT_FAULT) system_error_code += 3; // code 23 (if both then 25)
-        if (hfaults & HEATER_POOR_CONTACT_FAULT) system_error_code += 6; // code 26
+        system_error_code = 0b100000; // base (32) heater error code (or with the mask)
+        // element overheat: code 33 (bi = by itself) pot overheat: code 34 (bi);
+        // heater underheat: code 36 (bi); pot underheat: code 40 (bi)
+        // poor contact: code 48 (bi)
+        system_error_code |= hfaults;
         reset_app_state(STATE_SYSTEM_ERROR);
         faults_report_to_ecc(hfaults);
         return;
@@ -644,7 +645,7 @@ void start_task_cooking_now(void) {
     active_profile = cooking_get_profile(cooking_mode);
 
     if (active_profile == nullptr || active_profile->stage_count == 0u || active_profile->stages == nullptr) {
-        system_error_code = 41; // code 41: profile error
+        system_error_code = 80; // code 80: profile error
         faults_report_to_ecc(cooking_mode); // hm
         reset_app_state(STATE_SYSTEM_ERROR);
         return;
