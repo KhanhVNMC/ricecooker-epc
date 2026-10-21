@@ -24,7 +24,7 @@ void rc_tm1637dp_start(void);
 void rc_tm1637dp_write_byte(uint8_t byte);
 void rc_tm1637dp_stop(void);
 
-void rc_buzzer_set(bool on);
+void rc_buzzer_tone(uint32_t freq_hz);
 
 void rc_dbg_led_set(bool on);
 

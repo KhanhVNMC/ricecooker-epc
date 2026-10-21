@@ -37,12 +37,50 @@
 static ADC_HandleTypeDef adc1_handle;
 static bool heater_switched_on = false;
 
+static TIM_HandleTypeDef tim4_pwm;
+
 void rc_init_rchal(void) {
     // enable ports and ADCs
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE(); // ADC pins
+
+    __HAL_RCC_TIM4_CLK_ENABLE();
+
+    GPIO_InitTypeDef buzzer_conf = {0};
+    buzzer_conf.Pin = BUZZER_PIN;
+    buzzer_conf.Mode = GPIO_MODE_AF_PP; // timer drives the pin now
+    buzzer_conf.Pull = GPIO_NOPULL;
+    buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW;
+    HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
+
+    RCC_ClkInitTypeDef clocks;
+    uint32_t ignored; HAL_RCC_GetClockConfig(&clocks, &ignored);
+    uint32_t tim4_clock = HAL_RCC_GetPCLK1Freq();
+    if (clocks.APB1CLKDivider != RCC_HCLK_DIV1) {
+        tim4_clock *= 2U;
+    }
+
+    tim4_pwm.Instance = TIM4;
+    tim4_pwm.Init.Prescaler = (tim4_clock / 1000000U) - 1U; // 1 MHz tick
+    tim4_pwm.Init.CounterMode = TIM_COUNTERMODE_UP;
+    tim4_pwm.Init.Period = 1000U - 1U; // placeholder, overwritten per note
+    tim4_pwm.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    tim4_pwm.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // glitch-free note changes
+    if (HAL_TIM_PWM_Init(&tim4_pwm) != HAL_OK) {
+        platform_on_error(HAL_INIT_GPIO_ANALOG); // or a buzzer-specific error code
+    }
+
+    TIM_OC_InitTypeDef oc = {0};
+    oc.OCMode = TIM_OCMODE_PWM1;
+    oc.Pulse = 0; // CCR = 0 means silent
+    oc.OCPolarity = TIM_OCPOLARITY_HIGH;
+    oc.OCFastMode = TIM_OCFAST_DISABLE;
+    if (HAL_TIM_PWM_ConfigChannel(&tim4_pwm, &oc, TIM_CHANNEL_4) != HAL_OK) {
+        platform_on_error(HAL_INIT_GPIO_ANALOG);
+    }
+    HAL_TIM_PWM_Start(&tim4_pwm, TIM_CHANNEL_4);
 
     // buttons config (pulldown)
     GPIO_InitTypeDef btns_conf = {0};
@@ -59,15 +97,6 @@ void rc_init_rchal(void) {
     tm1637_pins_conf.Speed = GPIO_SPEED_FREQ_HIGH;
     tm1637_pins_conf.Pin = TM1637_CLK_PIN | TM1637_DIO_PIN;
     HAL_GPIO_Init(TM1637_GPIO_PORT, &tm1637_pins_conf);
-
-    // BUZZER pin config
-    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, GPIO_PIN_RESET); // muted by default
-    GPIO_InitTypeDef buzzer_conf = {0}; // now can config
-    buzzer_conf.Pin = BUZZER_PIN;
-    buzzer_conf.Mode = GPIO_MODE_OUTPUT_PP; // push-pull drive for transistor saturation
-    buzzer_conf.Pull = GPIO_NOPULL;
-    buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW; // 2MHz
-    HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
 
     // LED pin config (this is low-active, so SET == off)
     HAL_GPIO_WritePin(DBG_LED_GPIO_PORT, DBG_LED_PIN, GPIO_PIN_SET); // off by default
@@ -161,8 +190,15 @@ bitmask8_t rc_buttons_get_state(void) {
     return buttons;
 }
 
-void rc_buzzer_set(const bool on) {
-    HAL_GPIO_WritePin(BUZZER_GPIO_PORT, BUZZER_PIN, on ? GPIO_PIN_SET : GPIO_PIN_RESET);
+void rc_buzzer_tone(const uint32_t freq_hz) {
+    if (freq_hz == 0) {
+        __HAL_TIM_SET_COMPARE(&tim4_pwm, TIM_CHANNEL_4, 0); // silent, held low
+        return;
+    }
+    uint32_t arr = 1000000U / freq_hz - 1U;
+    if (arr > 0xFFFFU) arr = 0xFFFFU;
+    __HAL_TIM_SET_AUTORELOAD(&tim4_pwm, arr);
+    __HAL_TIM_SET_COMPARE(&tim4_pwm, TIM_CHANNEL_4, (arr + 1U) / 2U);
 }
 
 void rc_dbg_led_set(const bool on) {
