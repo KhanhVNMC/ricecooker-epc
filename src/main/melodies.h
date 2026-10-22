@@ -73,6 +73,7 @@
 
 typedef enum : uint8_t {
     MELODY_KATYUSHA,
+    MELODY_RF_ANTHEM,
 } melody_id_t;
 
 const buzzer_note_t *get_melody(melody_id_t melody, uint16_t *out_melody_size);

@@ -78,12 +78,60 @@ static const buzzer_note_t KATYUSHA_NOTES[] = {
     { NOTE_CS6, 134 }, { NOTE_REST, 133 }, { NOTE_B5, 250 }, { NOTE_CS6, 217 }, { NOTE_REST, 50 }, { NOTE_DS6, 216 }, { NOTE_REST, 50 }, { NOTE_E6, 17 }, { NOTE_DS6, 17 }, { NOTE_REST, 216 }, { NOTE_E6, 2650 }, { NOTE_REST, 250 }, // bar 71
 };
 
+// Alexandrov, State Anthem of the USSR (same melody as the modern Russian anthem), from midi/ussr.mid
+// (channel 0 melody), 80 BPM, one octave up
+static const buzzer_note_t USSR_ANTHEM_NOTES[] = {
+    { NOTE_C6, 2250 }, { NOTE_REST, 375 }, { NOTE_G5, 375 }, // bar 1
+    { NOTE_C6, 750 }, { NOTE_G5, 562 }, { NOTE_A5, 188 }, { NOTE_B5, 750 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 375 }, // bar 2
+    { NOTE_A5, 750 }, { NOTE_G5, 562 }, { NOTE_F5, 188 }, { NOTE_G5, 750 }, { NOTE_C5, 335 }, { NOTE_REST, 40 }, { NOTE_C5, 375 }, // bar 3
+    { NOTE_D5, 710 }, { NOTE_REST, 40 }, { NOTE_D5, 375 }, { NOTE_E5, 375 }, { NOTE_F5, 710 }, { NOTE_REST, 40 }, { NOTE_F5, 375 }, { NOTE_G5, 375 }, // bar 4
+    { NOTE_A5, 750 }, { NOTE_B5, 375 }, { NOTE_C6, 375 }, { NOTE_D6, 1125 }, { NOTE_G5, 375 }, // bar 5
+    { NOTE_E6, 750 }, { NOTE_D6, 562 }, { NOTE_C6, 188 }, { NOTE_D6, 750 }, { NOTE_B5, 375 }, { NOTE_G5, 375 }, // bar 6
+    { NOTE_C6, 750 }, { NOTE_B5, 562 }, { NOTE_A5, 188 }, { NOTE_B5, 750 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 375 }, // bar 7
+    { NOTE_A5, 750 }, { NOTE_G5, 375 }, { NOTE_F5, 375 }, { NOTE_G5, 750 }, { NOTE_C5, 335 }, { NOTE_REST, 40 }, { NOTE_C5, 375 }, // bar 8
+    { NOTE_C6, 750 }, { NOTE_B5, 562 }, { NOTE_A5, 188 }, { NOTE_G5, 1500 }, // bar 9
+    { NOTE_E6, 1500 }, { NOTE_D6, 375 }, { NOTE_C6, 375 }, { NOTE_B5, 375 }, { NOTE_C6, 375 }, // bar 10
+    { NOTE_D6, 1125 }, { NOTE_G5, 335 }, { NOTE_REST, 40 }, { NOTE_G5, 1500 }, // bar 11
+    { NOTE_C6, 1500 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_G5, 375 }, { NOTE_A5, 375 }, // bar 12
+    { NOTE_B5, 1125 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 750 }, { NOTE_REST, 750 }, // bar 13
+    { NOTE_C6, 750 }, { NOTE_A5, 562 }, { NOTE_B5, 188 }, { NOTE_C6, 750 }, { NOTE_A5, 562 }, { NOTE_B5, 188 }, // bar 14
+    { NOTE_C6, 750 }, { NOTE_A5, 375 }, { NOTE_C6, 335 }, { NOTE_REST, 40 }, { NOTE_C6, 1500 }, // bar 15
+    { NOTE_F6, 1500 }, { NOTE_E6, 375 }, { NOTE_D6, 375 }, { NOTE_C6, 375 }, { NOTE_D6, 375 }, // bar 16
+    { NOTE_E6, 1125 }, { NOTE_C6, 335 }, { NOTE_REST, 40 }, { NOTE_C6, 1500 }, // bar 17
+    { NOTE_D6, 1500 }, { NOTE_C6, 375 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_B5, 375 }, // bar 18
+    { NOTE_C6, 1125 }, { NOTE_A5, 335 }, { NOTE_REST, 40 }, { NOTE_A5, 1500 }, // bar 19
+    { NOTE_C6, 750 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_G5, 750 }, { NOTE_C5, 522 }, { NOTE_REST, 40 }, { NOTE_C5, 188 }, // bar 20
+    { NOTE_C6, 750 }, { NOTE_B5, 562 }, { NOTE_A5, 188 }, { NOTE_G5, 1085 }, { NOTE_REST, 40 }, { NOTE_G5, 375 }, // bar 21
+    { NOTE_C6, 750 }, { NOTE_G5, 562 }, { NOTE_A5, 188 }, { NOTE_B5, 750 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 375 }, // bar 22
+    { NOTE_A5, 750 }, { NOTE_G5, 562 }, { NOTE_F5, 188 }, { NOTE_G5, 750 }, { NOTE_C5, 335 }, { NOTE_REST, 40 }, { NOTE_C5, 375 }, // bar 23
+    { NOTE_D5, 710 }, { NOTE_REST, 40 }, { NOTE_D5, 375 }, { NOTE_E5, 375 }, { NOTE_F5, 710 }, { NOTE_REST, 40 }, { NOTE_F5, 375 }, { NOTE_G5, 375 }, // bar 24
+    { NOTE_A5, 750 }, { NOTE_B5, 375 }, { NOTE_C6, 375 }, { NOTE_D6, 1125 }, { NOTE_G5, 375 }, // bar 25
+    { NOTE_E6, 750 }, { NOTE_D6, 562 }, { NOTE_C6, 188 }, { NOTE_D6, 750 }, { NOTE_B5, 375 }, { NOTE_G5, 375 }, // bar 26
+    { NOTE_C6, 750 }, { NOTE_B5, 562 }, { NOTE_A5, 188 }, { NOTE_B5, 750 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 375 }, // bar 27
+    { NOTE_A5, 750 }, { NOTE_G5, 375 }, { NOTE_F5, 375 }, { NOTE_G5, 750 }, { NOTE_C5, 335 }, { NOTE_REST, 40 }, { NOTE_C5, 375 }, // bar 28
+    { NOTE_C6, 750 }, { NOTE_B5, 562 }, { NOTE_A5, 188 }, { NOTE_G5, 1500 }, // bar 29
+    { NOTE_E6, 1500 }, { NOTE_D6, 375 }, { NOTE_C6, 375 }, { NOTE_B5, 375 }, { NOTE_C6, 375 }, // bar 30
+    { NOTE_D6, 1125 }, { NOTE_G5, 335 }, { NOTE_REST, 40 }, { NOTE_G5, 1500 }, // bar 31
+    { NOTE_C6, 1500 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_G5, 375 }, { NOTE_A5, 375 }, // bar 32
+    { NOTE_B5, 1125 }, { NOTE_E5, 335 }, { NOTE_REST, 40 }, { NOTE_E5, 750 }, { NOTE_REST, 750 }, // bar 33
+    { NOTE_C6, 750 }, { NOTE_A5, 562 }, { NOTE_B5, 188 }, { NOTE_C6, 750 }, { NOTE_A5, 562 }, { NOTE_B5, 188 }, // bar 34
+    { NOTE_C6, 750 }, { NOTE_A5, 375 }, { NOTE_C6, 335 }, { NOTE_REST, 40 }, { NOTE_C6, 1500 }, // bar 35
+    { NOTE_F6, 1500 }, { NOTE_E6, 375 }, { NOTE_D6, 375 }, { NOTE_C6, 375 }, { NOTE_D6, 375 }, // bar 36
+    { NOTE_E6, 1125 }, { NOTE_C6, 335 }, { NOTE_REST, 40 }, { NOTE_C6, 1500 }, // bar 37
+    { NOTE_D6, 1500 }, { NOTE_C6, 375 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_B5, 375 }, // bar 38
+    { NOTE_C6, 1125 }, { NOTE_A5, 335 }, { NOTE_REST, 40 }, { NOTE_A5, 1500 }, // bar 39
+    { NOTE_C6, 750 }, { NOTE_B5, 375 }, { NOTE_A5, 375 }, { NOTE_G5, 750 }, { NOTE_C5, 522 }, { NOTE_REST, 40 }, { NOTE_C5, 188 }, // bar 40
+    { NOTE_G5, 1500 }, { NOTE_A5, 750 }, { NOTE_B5, 750 }, // bar 41
+    { NOTE_C6, 2250 }, // bar 42
+};
+
 const buzzer_note_t *get_melody(
     const melody_id_t melody,
     uint16_t *out_melody_size
 ) {
     switch (melody) {
         case MELODY_KATYUSHA: RETURN_MELODY(KATYUSHA_NOTES);
+        case MELODY_RF_ANTHEM: RETURN_MELODY(USSR_ANTHEM_NOTES);
     }
     *out_melody_size = 0;
     return nullptr;

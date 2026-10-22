@@ -96,9 +96,21 @@ xthread_mutex_t* xthreads_mutex_new(void) {
 }
 
 bool xthreads_mutex_acquire(const xthread_mutex_t *mutex) {
+    if (mutex == nullptr) {
+        return false;
+    }
+    if (__get_IPSR() != 0) {
+        return false; // please dont do this
+    }
     return xSemaphoreTake((const SemaphoreHandle_t) mutex, portMAX_DELAY) == pdTRUE;
 }
 
 void xthreads_mutex_release(const xthread_mutex_t *mutex) {
+    if (mutex == nullptr) {
+        return;
+    }
+    if (__get_IPSR() != 0) {
+        return; // please dont do this
+    }
     xSemaphoreGive(mutex);
 }

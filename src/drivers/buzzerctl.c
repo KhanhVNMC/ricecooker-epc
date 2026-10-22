@@ -10,10 +10,10 @@ static uint16_t current_track_size = 0;
 static uint16_t current_note_index = 0;
 
 static bool is_playable() {
-    return current_track_size != 0 && current_note_index < current_track_size;
+    return current_track != nullptr && current_track_size != 0 && current_note_index < current_track_size;
 }
 
-void buzzer_set_melody(const buzzer_note_t* track, const uint16_t track_size) {
+void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size) {
     xthreads_mutex_acquire(mutex);
     current_track = track;
     current_track_size = track_size;
@@ -23,6 +23,10 @@ void buzzer_set_melody(const buzzer_note_t* track, const uint16_t track_size) {
         xthreads_notify(thread_handle);
     }
     xthreads_mutex_release(mutex);
+}
+
+void buzzer_stop_melody() {
+    buzzer_play_melody(nullptr, 0);
 }
 
 void task_buzzer_update_thread(void *args) {

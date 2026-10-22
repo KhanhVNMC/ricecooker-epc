@@ -127,8 +127,9 @@ static void app_display_temperature(uint16_t temp);
 static uint32_t app_current_time() { return app_tick_start_timestamp; }
 
 void reset_app_state(const app_state_t reset_to) {
-    // heater
+    // heater & buzzer
     heater_set_enabled(false);
+    buzzer_stop_melody();
 
     // FSM reset
     app_state = reset_to;
@@ -542,7 +543,7 @@ void on_platform_tick(void) {
             if (changed) {
                 // TODO: JINGLE
                 uint16_t msize;
-                buzzer_set_melody(get_melody(MELODY_KATYUSHA, &msize), msize);
+                buzzer_play_melody(get_melody(MELODY_KATYUSHA, &msize), msize);
                 app_on_btns_press(changed);
             }
             last_input_mask = current_inp_mask;
