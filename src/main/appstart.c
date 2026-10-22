@@ -27,6 +27,7 @@ static void create_app_threads() {
 
 void platform_main(void) {
     display_normalize_segments(); // prevent ghosting
+    buzzer_sys_init(); // init buzzer mutex
     ricecooker_init(); // init application
     create_app_threads(); // create RTOS threads
     platform_start_xthreads_sched(); // init scheduler

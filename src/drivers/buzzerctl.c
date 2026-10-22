@@ -29,8 +29,12 @@ void buzzer_stop_melody() {
     buzzer_play_melody(nullptr, 0);
 }
 
-void task_buzzer_update_thread(void *args) {
+void buzzer_sys_init() {
     mutex = xthreads_mutex_new();
+    buzzer_stop_melody();
+}
+
+void task_buzzer_update_thread(void *args) {
     thread_handle = xthreads_current();
     while (1) {
         xthreads_mutex_acquire(mutex);

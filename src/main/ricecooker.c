@@ -543,7 +543,7 @@ void on_platform_tick(void) {
             if (changed) {
                 // TODO: JINGLE
                 uint16_t msize;
-                buzzer_play_melody(get_melody(MELODY_KATYUSHA, &msize), msize);
+                buzzer_play_melody(get_melody(MELODY_RF_ANTHEM, &msize), msize);
                 app_on_btns_press(changed);
             }
             last_input_mask = current_inp_mask;
