@@ -22,9 +22,6 @@
 #define HEATER_GPIO_PORT    GPIOA
 #define HEATER_PIN          GPIO_PIN_10
 
-#define BUZZER_GPIO_PORT    GPIOB
-#define BUZZER_PIN          GPIO_PIN_9
-
 #define DBG_LED_GPIO_PORT   GPIOC
 #define DBG_LED_PIN         GPIO_PIN_13
 
@@ -37,7 +34,8 @@
 static ADC_HandleTypeDef adc1_handle;
 static bool heater_switched_on = false;
 
-static TIM_HandleTypeDef tim4_pwm;
+static TIM_HandleTypeDef tim4_pwm_timer;
+static void rc_buzzer_init_tim4(void);
 
 void rc_init_rchal(void) {
     // enable ports and ADCs
@@ -46,41 +44,27 @@ void rc_init_rchal(void) {
     __HAL_RCC_GPIOC_CLK_ENABLE();
     __HAL_RCC_ADC1_CLK_ENABLE(); // ADC pins
 
-    __HAL_RCC_TIM4_CLK_ENABLE();
-
+    // init passive buzzer pwm stuff
+    rc_buzzer_init_tim4();
     GPIO_InitTypeDef buzzer_conf = {0};
-    buzzer_conf.Pin = BUZZER_PIN;
-    buzzer_conf.Mode = GPIO_MODE_AF_PP; // timer drives the pin now
+    buzzer_conf.Pin = GPIO_PIN_9; // Pin 9 port B
+    buzzer_conf.Mode = GPIO_MODE_AF_PP; // tim4 drives this
     buzzer_conf.Pull = GPIO_NOPULL;
     buzzer_conf.Speed = GPIO_SPEED_FREQ_LOW;
-    HAL_GPIO_Init(BUZZER_GPIO_PORT, &buzzer_conf);
+    HAL_GPIO_Init(GPIOB, &buzzer_conf);
 
-    RCC_ClkInitTypeDef clocks;
-    uint32_t ignored; HAL_RCC_GetClockConfig(&clocks, &ignored);
-    uint32_t tim4_clock = HAL_RCC_GetPCLK1Freq();
-    if (clocks.APB1CLKDivider != RCC_HCLK_DIV1) {
-        tim4_clock *= 2U;
-    }
-
-    tim4_pwm.Instance = TIM4;
-    tim4_pwm.Init.Prescaler = (tim4_clock / 1000000U) - 1U; // 1 MHz tick
-    tim4_pwm.Init.CounterMode = TIM_COUNTERMODE_UP;
-    tim4_pwm.Init.Period = 1000U - 1U; // placeholder, overwritten per note
-    tim4_pwm.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    tim4_pwm.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE; // glitch-free note changes
-    if (HAL_TIM_PWM_Init(&tim4_pwm) != HAL_OK) {
-        platform_on_error(HAL_INIT_GPIO_ANALOG); // or a buzzer-specific error code
-    }
-
+    // OC (CCR) basically determines the duty cycle (how long the out is HIGH)
+    // basically TIM4::Counter < CCR ==> HIGH (high N% of the time then LOW)
     TIM_OC_InitTypeDef oc = {0};
     oc.OCMode = TIM_OCMODE_PWM1;
-    oc.Pulse = 0; // CCR = 0 means silent
+    oc.Pulse = 0; // CCR = 0 == silent
     oc.OCPolarity = TIM_OCPOLARITY_HIGH;
     oc.OCFastMode = TIM_OCFAST_DISABLE;
-    if (HAL_TIM_PWM_ConfigChannel(&tim4_pwm, &oc, TIM_CHANNEL_4) != HAL_OK) {
-        platform_on_error(HAL_INIT_GPIO_ANALOG);
+    // TIM4 channel 4 lands on PB9
+    if (HAL_TIM_PWM_ConfigChannel(&tim4_pwm_timer, &oc, TIM_CHANNEL_4) != HAL_OK) {
+        platform_on_error(HAL_INIT_PWM_GEN);
     }
-    HAL_TIM_PWM_Start(&tim4_pwm, TIM_CHANNEL_4);
+    HAL_TIM_PWM_Start(&tim4_pwm_timer, TIM_CHANNEL_4);
 
     // buttons config (pulldown)
     GPIO_InitTypeDef btns_conf = {0};
@@ -190,15 +174,46 @@ bitmask8_t rc_buttons_get_state(void) {
     return buttons;
 }
 
-void rc_buzzer_tone(const uint32_t freq_hz) {
+static void rc_buzzer_init_tim4(void) {
+    __HAL_RCC_TIM4_CLK_ENABLE(); // enable the TIM4 clock so it clocks
+
+    RCC_ClkInitTypeDef clocks;
+    uint32_t ignored; HAL_RCC_GetClockConfig(&clocks, &ignored);
+    uint32_t tim4_clock = HAL_RCC_GetPCLK1Freq();
+    if (clocks.APB1CLKDivider != RCC_HCLK_DIV1) {
+        tim4_clock *= 2U; // there's a clock multplier in between PCLK and TIM4
+    }
+
+    tim4_pwm_timer.Instance = TIM4;
+    // suppose the TIM4 runs at 72mhz, the prescaler basically pulls this down to 72mhz/72 = 1mhz
+    // increments up every microsec
+    tim4_pwm_timer.Init.Prescaler = (tim4_clock / 1000000U) - 1U; // the prescaler + 1 before dividing
+    tim4_pwm_timer.Init.CounterMode = TIM_COUNTERMODE_UP; // same as tim2 and 3
+
+    // this (ARR) determines of each PWM cycle length
+    // basically each cycle lasts for N micros
+    tim4_pwm_timer.Init.Period = 1000U - 1U; // placeholder
+    tim4_pwm_timer.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+    tim4_pwm_timer.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+
+    // TIM4 now drives PWM on channel 4
+    if (HAL_TIM_PWM_Init(&tim4_pwm_timer) != HAL_OK) {
+        platform_on_error(HAL_INIT_PWM_GEN);
+    }
+}
+
+void rc_buzzer_set_tone(const uint16_t freq_hz) {
     if (freq_hz == 0) {
-        __HAL_TIM_SET_COMPARE(&tim4_pwm, TIM_CHANNEL_4, 0); // silent, held low
+        __HAL_TIM_SET_COMPARE(&tim4_pwm_timer, TIM_CHANNEL_4, 0); // silent, held low
         return;
     }
-    uint32_t arr = 1000000U / freq_hz - 1U;
-    if (arr > 0xFFFFU) arr = 0xFFFFU;
-    __HAL_TIM_SET_AUTORELOAD(&tim4_pwm, arr);
-    __HAL_TIM_SET_COMPARE(&tim4_pwm, TIM_CHANNEL_4, (arr + 1U) / 2U);
+    // how long each cycle is (this determines the PITCH!!)
+    // as freq drops (lower pitch), the ARR (cycle length) is widened
+    // which makes the buzzer vibrates less freqeuntly
+    const uint16_t period_us = (1000000U / freq_hz);
+    __HAL_TIM_SET_AUTORELOAD(&tim4_pwm_timer, period_us - 1u); // this sets the ARR (-1 because it starts at 0)
+    // 50% duty cycle, regardless of frequency
+    __HAL_TIM_SET_COMPARE(&tim4_pwm_timer, TIM_CHANNEL_4, period_us / 2U);
 }
 
 void rc_dbg_led_set(const bool on) {

@@ -7,6 +7,7 @@ typedef enum : uint8_t {
     HAL_INIT_SYSCLK,
     HAL_INIT_US_SLEEP,
     HAL_INIT_GPIO_ANALOG,
+    HAL_INIT_PWM_GEN,
     APPLICATION_INIT,
     SCHEDULER_INIT,
 } platform_error_t;

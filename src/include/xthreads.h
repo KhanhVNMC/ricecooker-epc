@@ -9,6 +9,7 @@
 
 typedef void (*xthread_func_t)(void *args);
 typedef void xthread_handle_t;
+typedef void xthread_mutex_t;
 
 // https://en.wikipedia.org/wiki/Ranks_and_insignia_of_the_Waffen-SS
 typedef enum : uint8_t {
@@ -41,5 +42,8 @@ void xthreads_csenter(void);
 void xthreads_csexit(void);
 void xthreads_wait(xthread_wait_mode_t wait_mode);
 bool xthreads_bwait(xthread_wait_mode_t wait_mode, uint32_t max_wait_ms);
+xthread_mutex_t* xthreads_mutex_new(void);
+bool xthreads_mutex_acquire(const xthread_mutex_t *mutex);
+void xthreads_mutex_release(const xthread_mutex_t *mutex);
 
 #endif //XTHREADS_H

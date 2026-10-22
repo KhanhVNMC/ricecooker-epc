@@ -1,6 +1,7 @@
 #include "tempstats.h"
 #include "ricecooker.h"
 #include "cookingprofile.h"
+#include "melodies.h"
 #include "include/cmath.h"
 #include "include/rchal.h"
 #include "include/xthreads.h"
@@ -539,7 +540,9 @@ void on_platform_tick(void) {
             // only fire event on btn press (not release)
             const bitmask8_t changed = current_inp_mask & ~last_input_mask;
             if (changed) {
-                buzzer_play_beep();
+                // TODO: JINGLE
+                uint16_t msize;
+                buzzer_set_melody(get_melody(MELODY_KATYUSHA, &msize), msize);
                 app_on_btns_press(changed);
             }
             last_input_mask = current_inp_mask;
@@ -721,7 +724,7 @@ void on_cooking_pltick(const uint32_t current_time) {
 }
 
 void on_cooking_complete(void) {
-    buzzer_play_beep();
+    // TODO play a jingle
 
     bool auto_hold_warm = manual_mode_auto_warm;
     if (active_profile != nullptr) {

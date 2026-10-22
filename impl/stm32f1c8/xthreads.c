@@ -4,6 +4,7 @@
 #include "include/xthreads.h"
 #include "include/platform.h"
 #include "task.h"
+#include "semphr.h"
 
 void platform_start_xthreads_sched(void) {
     vTaskStartScheduler();
@@ -88,4 +89,16 @@ void xthreads_wait(const xthread_wait_mode_t wait_mode) {
 // returns false if timed out
 bool xthreads_bwait(const xthread_wait_mode_t wait_mode, const uint32_t max_wait_ms) {
     return xthreads_wait_generic(wait_mode, pdMS_TO_TICKS(max_wait_ms)) != BWAIT_TIMED_OUT;
+}
+
+xthread_mutex_t* xthreads_mutex_new(void) {
+    return xSemaphoreCreateMutex();
+}
+
+bool xthreads_mutex_acquire(const xthread_mutex_t *mutex) {
+    return xSemaphoreTake((const SemaphoreHandle_t) mutex, portMAX_DELAY) == pdTRUE;
+}
+
+void xthreads_mutex_release(const xthread_mutex_t *mutex) {
+    xSemaphoreGive(mutex);
 }

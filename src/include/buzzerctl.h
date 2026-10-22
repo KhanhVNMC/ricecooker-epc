@@ -1,7 +1,14 @@
 #ifndef BUZZERCTL_H
 #define BUZZERCTL_H
+#include <stdint.h>
+
+typedef struct {
+    uint16_t freq_hz; // 0 = shutup
+    uint16_t duration_ms;
+} buzzer_note_t;
+
+void buzzer_set_melody(const buzzer_note_t* track, uint16_t track_size);
 
 void task_buzzer_update_thread(void *args);
-void buzzer_play_beep(void);
 
 #endif //BUZZERCTL_H

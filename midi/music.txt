@@ -1,0 +1,278 @@
+// melodies evicted from src/main/melodies.c on 2026-10-22
+// paste a table back into melodies.c (and add its enum + get_melody case) to use it again
+// note names come from src/main/melodies.h
+
+// converted from midi/erika.mid.mid (track 0, top voice), 246 BPM, one octave up
+static const buzzer_note_t ERIKA_NOTES[] = {
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 1
+    { NOTE_DS5, 365 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 2
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 3
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 365 }, { NOTE_REST, 122 }, // bar 4
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 5
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 6
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 8
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 9
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 11
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 12
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 14
+    { NOTE_DS5, 365 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 15
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 16
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 365 }, { NOTE_REST, 122 }, // bar 17
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 18
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 19
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 21
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 22
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 24
+    { NOTE_GS5, 365 }, { NOTE_REST, 1586 }, // bar 25
+    { NOTE_DS5, 610 }, { NOTE_REST, 122 }, { NOTE_GS5, 182 }, { NOTE_REST, 61 }, // bar 27
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 28
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 29
+    { NOTE_F5, 365 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 30
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 31
+    { NOTE_G5, 610 }, { NOTE_REST, 122 }, { NOTE_GS5, 183 }, { NOTE_REST, 61 }, // bar 33
+    { NOTE_AS5, 366 }, { NOTE_REST, 122 }, { NOTE_AS5, 366 }, { NOTE_REST, 122 }, // bar 34
+    { NOTE_AS5, 366 }, { NOTE_REST, 121 }, { NOTE_AS5, 366 }, { NOTE_REST, 122 }, // bar 35
+    { NOTE_DS6, 366 }, { NOTE_REST, 122 }, { NOTE_CS6, 366 }, { NOTE_REST, 122 }, // bar 36
+    { NOTE_C6, 366 }, { NOTE_REST, 1585 }, // bar 37
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 39
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 365 }, { NOTE_REST, 122 }, // bar 40
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 41
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 42
+    { NOTE_C6, 609 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 43
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 44
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 46
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 47
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 49
+    { NOTE_GS5, 366 }, { NOTE_REST, 609 }, // bar 50
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 51
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 52
+    { NOTE_DS5, 365 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 53
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 54
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 182 }, { NOTE_REST, 61 }, // bar 55
+    { NOTE_GS5, 366 }, { NOTE_REST, 1586 }, // bar 56
+    { NOTE_G5, 366 }, { NOTE_REST, 121 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 58
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 59
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 61
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 62
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 64
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 65
+    { NOTE_DS5, 365 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 66
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 67
+    { NOTE_C6, 609 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 68
+    { NOTE_GS5, 366 }, { NOTE_REST, 1586 }, // bar 69
+    { NOTE_G5, 365 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 71
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 72
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 74
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 75
+    { NOTE_DS5, 610 }, { NOTE_REST, 122 }, { NOTE_GS5, 183 }, { NOTE_REST, 61 }, // bar 77
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 365 }, { NOTE_REST, 122 }, // bar 78
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 79
+    { NOTE_F5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 80
+    { NOTE_GS5, 365 }, { NOTE_REST, 1586 }, // bar 81
+    { NOTE_G5, 610 }, { NOTE_REST, 122 }, { NOTE_GS5, 182 }, { NOTE_REST, 61 }, // bar 83
+    { NOTE_AS5, 366 }, { NOTE_REST, 122 }, { NOTE_AS5, 366 }, { NOTE_REST, 122 }, // bar 84
+    { NOTE_AS5, 366 }, { NOTE_REST, 122 }, { NOTE_AS5, 366 }, { NOTE_REST, 122 }, // bar 85
+    { NOTE_DS6, 366 }, { NOTE_REST, 121 }, { NOTE_CS6, 366 }, { NOTE_REST, 122 }, // bar 86
+    { NOTE_C6, 366 }, { NOTE_REST, 1586 }, // bar 87
+    { NOTE_C5, 609 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 89
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 90
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 365 }, { NOTE_REST, 122 }, // bar 91
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 92
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 93
+    { NOTE_GS5, 365 }, { NOTE_REST, 1586 }, // bar 94
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 365 }, { NOTE_REST, 122 }, // bar 96
+    { NOTE_AS5, 366 }, { NOTE_REST, 1586 }, // bar 97
+    { NOTE_C6, 609 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 99
+    { NOTE_GS5, 366 }, { NOTE_REST, 610 }, // bar 100
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 182 }, { NOTE_REST, 61 }, // bar 101
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 102
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 103
+    { NOTE_GS5, 365 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 104
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 105
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 106
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 108
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 109
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 60 }, // bar 111
+    { NOTE_GS5, 366 }, { NOTE_REST, 1586 }, // bar 112
+    { NOTE_C5, 609 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 114
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 115
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 116
+    { NOTE_GS5, 365 }, { NOTE_REST, 122 }, { NOTE_C6, 366 }, { NOTE_REST, 122 }, // bar 117
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 118
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 119
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 121
+    { NOTE_AS5, 365 }, { NOTE_REST, 1586 }, // bar 122
+    { NOTE_C6, 610 }, { NOTE_REST, 121 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 124
+    { NOTE_GS5, 366 }, { NOTE_REST, 1586 }, // bar 125
+    { NOTE_DS5, 609 }, { NOTE_REST, 122 }, { NOTE_GS5, 183 }, { NOTE_REST, 61 }, // bar 127
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 128
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 365 }, { NOTE_REST, 122 }, // bar 129
+    { NOTE_F5, 366 }, { NOTE_REST, 122 }, { NOTE_G5, 366 }, { NOTE_REST, 122 }, // bar 130
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 131
+    { NOTE_G5, 610 }, { NOTE_REST, 122 }, { NOTE_GS5, 183 }, { NOTE_REST, 61 }, // bar 133
+    { NOTE_AS5, 366 }, { NOTE_REST, 122 }, { NOTE_AS5, 366 }, { NOTE_REST, 121 }, // bar 134
+    { NOTE_AS5, 366 }, { NOTE_REST, 122 }, { NOTE_AS5, 366 }, { NOTE_REST, 122 }, // bar 135
+    { NOTE_DS6, 366 }, { NOTE_REST, 122 }, { NOTE_CS6, 366 }, { NOTE_REST, 122 }, // bar 136
+    { NOTE_C6, 366 }, { NOTE_REST, 1585 }, // bar 137
+    { NOTE_C5, 610 }, { NOTE_REST, 122 }, { NOTE_CS5, 183 }, { NOTE_REST, 61 }, // bar 139
+    { NOTE_DS5, 365 }, { NOTE_REST, 122 }, { NOTE_DS5, 366 }, { NOTE_REST, 122 }, // bar 140
+    { NOTE_DS5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 141
+    { NOTE_GS5, 366 }, { NOTE_REST, 122 }, { NOTE_C6, 365 }, { NOTE_REST, 122 }, // bar 142
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 143
+    { NOTE_GS5, 366 }, { NOTE_REST, 1585 }, // bar 144
+    { NOTE_G5, 366 }, { NOTE_REST, 122 }, { NOTE_GS5, 366 }, { NOTE_REST, 122 }, // bar 146
+    { NOTE_AS5, 366 }, { NOTE_REST, 1585 }, // bar 147
+    { NOTE_C6, 610 }, { NOTE_REST, 122 }, { NOTE_AS5, 183 }, { NOTE_REST, 61 }, // bar 149
+    { NOTE_GS5, 365 }, { NOTE_REST, 122 }, // bar 150
+};
+
+// converted from midi/Touhou - U.N Owen was Her (track 0, top voice above C3), 150 BPM, original pitch
+static const buzzer_note_t UN_OWEN_NOTES[] = {
+    { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, // bar 1
+    { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, // bar 2
+    { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, // bar 3
+    { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, // bar 4
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, // bar 5
+    { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, // bar 6
+    { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, // bar 7
+    { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, // bar 8
+    { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, // bar 9
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, // bar 10
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 11
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 12
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 13
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 800 }, // bar 14
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 15
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 16
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 17
+    { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_F5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 800 }, // bar 18
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 19
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 20
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 21
+    { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, { NOTE_D5, 400 }, { NOTE_B3, 400 }, // bar 22
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 23
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 24
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 25
+    { NOTE_B5, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, // bar 26
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 27
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 28
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 29
+    { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, { NOTE_D5, 400 }, { NOTE_B3, 400 }, // bar 30
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 31
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 32
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 33
+    { NOTE_B5, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, // bar 34
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, // bar 35
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, // bar 36
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, // bar 37
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, // bar 38
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, // bar 39
+    { NOTE_FS4, 100 }, { NOTE_DS4, 100 }, { NOTE_REST, 100 }, { NOTE_AS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_DS4, 400 }, { NOTE_REST, 200 }, { NOTE_AS3, 100 }, { NOTE_CS4, 100 }, // bar 40
+    { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, // bar 41
+    { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_AS4, 400 }, { NOTE_REST, 400 }, // bar 42
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, // bar 43
+    { NOTE_FS4, 100 }, { NOTE_DS4, 100 }, { NOTE_REST, 100 }, { NOTE_AS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_DS4, 400 }, { NOTE_REST, 200 }, { NOTE_AS3, 100 }, { NOTE_CS4, 100 }, // bar 44
+    { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, // bar 45
+    { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_AS4, 100 }, { NOTE_REST, 200 }, { NOTE_AS4, 100 }, { NOTE_REST, 200 }, { NOTE_AS4, 200 }, // bar 46
+    { NOTE_D6, 800 }, { NOTE_CS6, 800 }, // bar 47
+    { NOTE_F6, 800 }, { NOTE_E6, 800 }, { NOTE_REST, 200 }, // bar 48
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, // bar 49
+    { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, // bar 50
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 100 }, // bar 51
+    { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, // bar 52
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 100 }, // bar 53
+    { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 100 }, // bar 54
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 55
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 56
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 57
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 800 }, // bar 58
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 59
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 60
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 61
+    { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_F5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 800 }, { NOTE_REST, 800 }, // bar 62
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 63
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 64
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 65
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, // bar 66
+    { NOTE_D5, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 67
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 68
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 69
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_B5, 400 }, { NOTE_B3, 400 }, // bar 70
+    { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 71
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 72
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 73
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, // bar 74
+    { NOTE_D5, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 75
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 76
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 77
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_B5, 400 }, { NOTE_B3, 400 }, // bar 78
+    { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, // bar 79
+    { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, // bar 80
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, // bar 81
+    { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, // bar 82
+    { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, // bar 83
+    { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, // bar 84
+    { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 100 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, // bar 85
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_D5, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 100 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, // bar 86
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 87
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 88
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 89
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 800 }, // bar 90
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 91
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 92
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 93
+    { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_F5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 800 }, // bar 94
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 95
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 96
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 97
+    { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, { NOTE_D5, 400 }, { NOTE_B3, 400 }, // bar 98
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 99
+    { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, // bar 100
+    { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, // bar 101
+    { NOTE_B5, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_B3, 400 }, // bar 102
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, // bar 103
+    { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, { NOTE_B4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_E4, 100 }, // bar 104
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, // bar 105
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, // bar 106
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, // bar 107
+    { NOTE_FS4, 100 }, { NOTE_DS4, 100 }, { NOTE_REST, 100 }, { NOTE_AS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_DS4, 400 }, { NOTE_REST, 200 }, { NOTE_AS3, 100 }, { NOTE_CS4, 100 }, // bar 108
+    { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, // bar 109
+    { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_AS4, 400 }, { NOTE_REST, 400 }, // bar 110
+    { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_AS4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_DS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, { NOTE_GS4, 100 }, { NOTE_F4, 100 }, { NOTE_REST, 100 }, { NOTE_CS4, 100 }, // bar 111
+    { NOTE_FS4, 100 }, { NOTE_DS4, 100 }, { NOTE_REST, 100 }, { NOTE_AS3, 100 }, { NOTE_F4, 100 }, { NOTE_FS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS4, 100 }, { NOTE_DS4, 400 }, { NOTE_REST, 200 }, { NOTE_AS3, 100 }, { NOTE_CS4, 100 }, // bar 112
+    { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_DS4, 100 }, { NOTE_AS3, 100 }, { NOTE_REST, 100 }, { NOTE_FS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_CS4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, // bar 113
+    { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_F4, 100 }, { NOTE_D4, 100 }, { NOTE_REST, 100 }, { NOTE_GS3, 100 }, { NOTE_AS4, 100 }, { NOTE_REST, 200 }, { NOTE_AS4, 100 }, { NOTE_REST, 200 }, { NOTE_AS4, 200 }, // bar 114
+    { NOTE_D6, 800 }, { NOTE_CS6, 800 }, // bar 115
+    { NOTE_F6, 800 }, { NOTE_E6, 800 }, { NOTE_REST, 200 }, // bar 116
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, // bar 117
+    { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, // bar 118
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 100 }, // bar 119
+    { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 300 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, { NOTE_E6, 100 }, { NOTE_REST, 300 }, // bar 120
+    { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_D6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 300 }, { NOTE_CS6, 100 }, { NOTE_REST, 100 }, // bar 121
+    { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_CS3, 200 }, { NOTE_F6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 100 }, { NOTE_C3, 200 }, { NOTE_E6, 100 }, { NOTE_REST, 100 }, // bar 122
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 123
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 124
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 125
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 800 }, // bar 126
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 127
+    { NOTE_GS4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_E4, 200 }, { NOTE_REST, 200 }, { NOTE_G4, 200 }, { NOTE_REST, 200 }, // bar 128
+    { NOTE_FS4, 200 }, { NOTE_REST, 200 }, { NOTE_D4, 200 }, { NOTE_REST, 200 }, { NOTE_F4, 200 }, { NOTE_REST, 200 }, { NOTE_CS4, 200 }, { NOTE_REST, 200 }, // bar 129
+    { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_F5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 800 }, { NOTE_REST, 800 }, // bar 130
+    { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 131
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 132
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 133
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, // bar 134
+    { NOTE_D5, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 135
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 136
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 137
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_B5, 400 }, { NOTE_B3, 400 }, // bar 138
+    { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 139
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 140
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 141
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_FS5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_E5, 200 }, { NOTE_FS5, 100 }, { NOTE_REST, 100 }, // bar 142
+    { NOTE_D5, 400 }, { NOTE_B3, 400 }, { NOTE_B4, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, // bar 143
+    { NOTE_CS5, 200 }, { NOTE_REST, 200 }, { NOTE_FS5, 200 }, { NOTE_REST, 200 }, { NOTE_D5, 200 }, { NOTE_REST, 200 }, { NOTE_E5, 200 }, { NOTE_FS5, 200 }, // bar 144
+    { NOTE_E5, 200 }, { NOTE_REST, 200 }, { NOTE_GS5, 200 }, { NOTE_REST, 200 }, { NOTE_B5, 200 }, { NOTE_FS5, 200 }, { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_REST, 100 }, // bar 145
+    { NOTE_CS6, 200 }, { NOTE_D6, 100 }, { NOTE_CS6, 100 }, { NOTE_B5, 200 }, { NOTE_A5, 100 }, { NOTE_REST, 100 }, { NOTE_B5, 400 }, { NOTE_B3, 400 }, // bar 146
+    { NOTE_B3, 400 }, { NOTE_B3, 400 }, { NOTE_REST, 200 }, // bar 147
+};

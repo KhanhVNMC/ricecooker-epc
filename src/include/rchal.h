@@ -1,5 +1,5 @@
-#ifndef RICECOOKER_RCHAL_H
-#define RICECOOKER_RCHAL_H
+#ifndef RCHAL_H
+#define RCHAL_H
 #include <stdint.h>
 
 typedef uint8_t bitmask8_t;
@@ -24,7 +24,7 @@ void rc_tm1637dp_start(void);
 void rc_tm1637dp_write_byte(uint8_t byte);
 void rc_tm1637dp_stop(void);
 
-void rc_buzzer_tone(uint32_t freq_hz);
+void rc_buzzer_set_tone(uint16_t freq_hz);
 
 void rc_dbg_led_set(bool on);
 
@@ -37,4 +37,4 @@ bool rc_heater_is_on(void);
 
 uint32_t rc_time_current_millis(void);
 
-#endif //RICECOOKER_RCHAL_H
+#endif //RCHAL_H
