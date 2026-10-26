@@ -10,7 +10,7 @@ static xthread_handle_t *MAIN_APP_THREAD;
 static xthread_handle_t *HEATER_UPDATE_THREAD;
 static xthread_handle_t *BUZZER_UPDATE_THREAD;
 
-static void create_app_threads() {
+static void create_app_threads(void) {
     HEATER_UPDATE_THREAD = xthreads_new(
         task_heater_update_thread, nullptr,
         OBERSTER_FUHRER_DER_SS, "Adolf Heater"

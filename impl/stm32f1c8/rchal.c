@@ -9,7 +9,7 @@
 #define TM1637_CLK_PIN      GPIO_PIN_10
 #define TM1637_DIO_PIN      GPIO_PIN_11
 // the sweatshop children shall not eat, esp one in QA, violating
-// official tm1637 timings (if broke set to 10u)
+// official tm1637 datasheet timings (if broke set to 10u)
 #define TM1637_DELAY_US     (7u)
 
 #define BTNS_GPIO_PORT      GPIOA
@@ -58,7 +58,7 @@ void rc_init_rchal(void) {
     TIM_OC_InitTypeDef oc = {0};
     oc.OCMode = TIM_OCMODE_PWM1;
     oc.Pulse = 0; // CCR = 0 == silent
-    oc.OCPolarity = TIM_OCPOLARITY_HIGH;
+    oc.OCPolarity = TIM_OCPOLARITY_HIGH; // pin HIGH when COUNTER < CCR
     oc.OCFastMode = TIM_OCFAST_DISABLE;
     // TIM4 channel 4 lands on PB9
     if (HAL_TIM_PWM_ConfigChannel(&tim4_pwm_timer, &oc, TIM_CHANNEL_4) != HAL_OK) {

@@ -8,7 +8,9 @@ typedef struct {
 } buzzer_note_t;
 
 void buzzer_play_melody(const buzzer_note_t* track, uint16_t track_size, bool loop_track);
-void buzzer_stop_melody();
+void buzzer_stop_melody(void);
+void buzzer_mute_device(bool muted);
+bool buzzer_is_dev_muted(void);
 
 void buzzer_sys_init(void);
 void task_buzzer_update_thread(void *args);

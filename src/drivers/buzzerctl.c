@@ -5,12 +5,14 @@
 static const xthread_handle_t *thread_handle;
 static const xthread_mutex_t  *mutex;
 
+static bool buzzer_dev_muted = false;
+
 static const buzzer_note_t *current_track = nullptr;
 static uint16_t current_track_size = 0;
 static uint16_t current_note_index = 0;
 static bool current_track_loop = false;
 
-static bool is_playable() {
+static bool is_playable(void) {
     return current_track != nullptr && current_track_size != 0 && current_note_index < current_track_size;
 }
 
@@ -29,11 +31,20 @@ void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size, c
     xthreads_mutex_release(mutex);
 }
 
-void buzzer_stop_melody() {
+void buzzer_stop_melody(void) {
     buzzer_play_melody(nullptr, 0, false);
 }
 
-void buzzer_sys_init() {
+// i need this so automated tests wont DRIVE ME FUCKING INSANE
+void buzzer_mute_device(const bool muted) {
+    buzzer_dev_muted = muted;
+}
+
+bool buzzer_is_dev_muted(void) {
+    return buzzer_dev_muted;
+}
+
+void buzzer_sys_init(void) {
     mutex = xthreads_mutex_new();
     buzzer_stop_melody();
 }
@@ -57,7 +68,8 @@ void task_buzzer_update_thread(void *args) {
         xthreads_mutex_release(mutex);
 
         // play the note & sleep (the note still plays)
-        rc_buzzer_set_tone(current_note->freq_hz);
+        if (!buzzer_dev_muted) rc_buzzer_set_tone(current_note->freq_hz);
+        else rc_buzzer_set_tone(0); // shut up
         xthreads_sleep(current_note->duration_ms);
     }
 }

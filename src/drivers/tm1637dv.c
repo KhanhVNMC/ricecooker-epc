@@ -125,7 +125,7 @@ static void set_characters(const digit_t digits[4], const bool colon) {
     send_raw_segments(out_masks);
 }
 
-static void reset_scroll_context() {
+static void reset_scroll_context(void) {
     scroll_mode_active = false;
     sc_buffer = nullptr;
     sc_buffer_size = 0;

@@ -280,7 +280,7 @@ static USBD_DescriptorsTypeDef usb_descriptors = {
 
 static bool usb_initialized = false;
 
-bool ecc_is_layer_ready() {
+bool ecc_is_layer_ready(void) {
     return usb_initialized && usb_device.dev_state == USBD_STATE_CONFIGURED;
 }
 

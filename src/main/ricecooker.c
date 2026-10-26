@@ -126,7 +126,7 @@ static btn_feedback_t config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pr
 static void app_display_countdown(bool blink, uint32_t time_left_secs);
 static void app_display_temperature(uint16_t temp);
 // 禁弾「過去を刻む時計」: time math is intentionally wraparound safe
-static uint32_t app_current_time() { return app_tick_start_timestamp; }
+static uint32_t app_current_time(void) { return app_tick_start_timestamp; }
 
 void reset_app_state(const app_state_t reset_to) {
     // heater & buzzer
@@ -599,7 +599,7 @@ static uint8_t stage_setpoint_index = 0;
 // this prevent the first initial heatup to be treated as boil dry
 static bool boil_plateau_seen = false;
 
-void reset_cooking_context() {
+void reset_cooking_context(void) {
     active_profile = nullptr;
     active_stage_idx = 0;
     timestamp_stage_start = 0;
@@ -810,9 +810,10 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             goto resp_ack;
         }
         case CIB_CTL_SYSCONFIG: {
-            // [configuration bitfield: 1]
+            // [configuration bitfield: 2]
             if (payload_size != 1) goto resp_nak;
             phys_input_disabled = (payload[0] & 0b1) != 0; // LSB = 1 == disable
+            buzzer_mute_device((payload[0] & 0b10) != 0); // 2nd bit set = muted
             goto resp_ack;
         }
         case CIB_CTL_PRESS_BTNS: {
@@ -880,6 +881,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
                 goto resp_nak;
             }
             // normal delayed with preset
+            if (payload_size != 3) goto resp_nak; // for preset, only accept [time][preset]
             reset_app_state(STATE_IDLE); // reset to a safe state first
             delayed_mode_time_mins = delay_time_mins;
             set_cooking_mode(cook_mode);
