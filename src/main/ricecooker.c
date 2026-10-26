@@ -120,7 +120,9 @@ void on_platform_tick(void);
 bool on_cmd_datagram_recv(ib_cmd_type_t cmd_type, uint16_t payload_size, const uint8_t *payload);
 
 // util functions
-static void config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
+static void set_app_state(const app_state_t new_state) { app_state = new_state; }
+static void set_cooking_mode(const cooking_mode_t new_mode) { cooking_mode = new_mode; }
+static btn_feedback_t config_adjust_time(uint16_t *time_mins_dest, bitmask8_t pressed);
 static void app_display_countdown(bool blink, uint32_t time_left_secs);
 static void app_display_temperature(uint16_t temp);
 // 禁弾「過去を刻む時計」: time math is intentionally wraparound safe
@@ -132,11 +134,14 @@ void reset_app_state(const app_state_t reset_to) {
     buzzer_stop_melody();
 
     // FSM reset
-    app_state = reset_to;
-    cooking_mode = MODE_RICE_NORMAL;
+    set_app_state(reset_to);
+    set_cooking_mode(MODE_RICE_NORMAL);
     if (reset_to != STATE_SYSTEM_ERROR) {
         system_error_code = 0; // no "errors"
         heater_clear_faults();
+    } else {
+        // for error state, keep playing this annoying fuck sound; looped
+        melodies_play_one(MELODY_SYSTEM_ERROR, true);
     }
 
     // default values for delay and manual + more
@@ -157,19 +162,25 @@ void reset_app_state(const app_state_t reset_to) {
     timestamp_last_display_sc_tick = 0;
 }
 
-void app_on_btns_press(const bitmask8_t pressed) {
+// RULEs FOR BUTTON FEEDBACK:
+// If the button led to a state/value change => BTN_ACCEPTED_*
+// if the button intends to do state/value change but hits limits/rejection => BTN_REJECTED
+// otherwise: BTN_IGNORED (nothing changed, you (and your actions) are worthless << self reflection btw)
+btn_feedback_t app_on_btns_press(const bitmask8_t pressed) {
     if (pressed & RC_BTN_CANCEL) {
+        const app_state_t last_state = app_state;
         reset_app_state(STATE_IDLE); // ignore errors for now
-        return;
+        return last_state == app_state ? BTN_IGNORED : BTN_ACCEPTED;
     }
     switch (app_state) {
         case STATE_IDLE: {
             // pressing OPTIONS here take to mode select menu
             if (pressed & RC_BTN_OPTIONS) {
-                app_state = STATE_MODE_SELECT;
-                cooking_mode = MODE_RICE_NORMAL;
+                set_app_state(STATE_MODE_SELECT);
+                set_cooking_mode(MODE_RICE_NORMAL);
+                return BTN_ACCEPTED;
             }
-            break;
+            return BTN_IGNORED;
         }
         case STATE_CF_DELAYED_MODE_SELECT:
         case STATE_MODE_SELECT: {
@@ -177,98 +188,106 @@ void app_on_btns_press(const bitmask8_t pressed) {
             if (pressed & RC_BTN_SELECT) {
                 // if selected "DELAY", take to select delayed time
                 if (cooking_mode == MODE_DELAYED_EXEC) {
-                    app_state = STATE_CF_DELAYED_TIME;
-                    cooking_mode = MODE_RICE_NORMAL; // ensure valid mode
+                    set_app_state(STATE_CF_DELAYED_TIME);
+                    set_cooking_mode(MODE_RICE_NORMAL); // ensure valid mode
                     config_time_edit_minutes = true;
-                    break;
+                    return BTN_ACCEPTED;
                 }
                 // if selected "MANUAL", take to set temp
                 if (cooking_mode == MODE_MANUAL_USER) {
-                    app_state = STATE_CF_MANUAL_TEMP;
-                    break;
+                    set_app_state(STATE_CF_MANUAL_TEMP);
+                    return BTN_ACCEPTED;
                 }
                 start_cooking_program(); // delayed/now is handled inside
-                break;
+                return BTN_ACCEPTED_SELF;
             }
             // in delayed mode, you cannot select delayed again
             const uint8_t mode_count = delayed_mode_configured ? MODE_DELAYED_EXEC : COUNT_COOKING_MODES;
             // wraparounds for less clunky navigation
             if (pressed & RC_BTN_INCR) {
-                cooking_mode = (cooking_mode + 1) % mode_count;
-            } else if (pressed & RC_BTN_DECR) {
-                cooking_mode = ((cooking_mode - 1) + mode_count) % mode_count;
+                set_cooking_mode((cooking_mode + 1) % mode_count);
+                return BTN_ACCEPTED;
             }
-            break;
+            if (pressed & RC_BTN_DECR) {
+                set_cooking_mode(((cooking_mode - 1) + mode_count) % mode_count);
+                return BTN_ACCEPTED;
+            }
+            return BTN_IGNORED;
         }
         case STATE_CF_MANUAL_TEMP: {
             if (pressed & RC_BTN_SELECT) {
                 // after selecting temp, select time 4 manual
-                app_state = STATE_CF_MANUAL_TIME;
+                set_app_state(STATE_CF_MANUAL_TIME);
                 config_time_edit_minutes = true;
-                break;
+                return BTN_ACCEPTED;
             }
             if (pressed & RC_BTN_INCR) {
                 if (manual_mode_temp + CONFIG_TEMP_STEP <= MAX_CONFIG_TEMP) {
                     manual_mode_temp += CONFIG_TEMP_STEP;
+                    return BTN_ACCEPTED;
                 }
-            } else if (pressed & RC_BTN_DECR) {
+                return BTN_REJECTED;
+            }
+            if (pressed & RC_BTN_DECR) {
                 if (manual_mode_temp >= CONFIG_TEMP_STEP + MIN_CONFIG_TEMP) {
                     manual_mode_temp -= CONFIG_TEMP_STEP;
+                    return BTN_ACCEPTED;
                 }
+                return BTN_REJECTED;
             }
-            break;
+            return BTN_IGNORED;
         }
         case STATE_CF_MANUAL_TIME: {
             if (pressed & RC_BTN_SELECT) {
                 // after selecting time, choose to hold warm after or not
-                app_state = STATE_CF_MANUAL_AUTO_WARM;
-                break;
+                set_app_state(STATE_CF_MANUAL_AUTO_WARM);
+                return BTN_ACCEPTED;
             }
             if (pressed & RC_BTN_OPTIONS) {
                 // swap between editing min/hour
                 config_time_edit_minutes = !config_time_edit_minutes;
-                break;
+                return BTN_ACCEPTED;
             }
-            config_adjust_time(&manual_mode_time_mins, pressed);
-            break;
+            return config_adjust_time(&manual_mode_time_mins, pressed);
         }
         case STATE_CF_MANUAL_AUTO_WARM: {
             if (pressed & RC_BTN_SELECT) {
                 start_cooking_program(); // cook time
-                break;
+                return BTN_ACCEPTED_SELF;
             }
             if (pressed & RC_BTN_OPTIONS) {
                 // swap between on/off auto warm
                 manual_mode_auto_warm = !manual_mode_auto_warm;
-                break;
+                return BTN_ACCEPTED;
             }
-            break;
+            return BTN_IGNORED;
         }
         case STATE_CF_DELAYED_TIME: {
             if (pressed & RC_BTN_SELECT) {
                 // delayed mode configured complete
                 delayed_mode_configured = true;
-                cooking_mode = MODE_RICE_NORMAL; // default mode
-                app_state = STATE_CF_DELAYED_MODE_SELECT;
-                break;
+                set_cooking_mode(MODE_RICE_NORMAL); // default mode
+                set_app_state(STATE_CF_DELAYED_MODE_SELECT);
+                return BTN_ACCEPTED;
             }
             if (pressed & RC_BTN_OPTIONS) {
                 // swap between editing min/hour
                 config_time_edit_minutes = !config_time_edit_minutes;
-                break;
+                return BTN_ACCEPTED;
             }
-            config_adjust_time(&delayed_mode_time_mins, pressed);
-            break;
+            return config_adjust_time(&delayed_mode_time_mins, pressed);
         }
         case STATE_COOKING: {
             if (pressed & RC_BTN_OPTIONS) {
                 // this should display the temp screen for Xs (default 3)
                 timestamp_pot_temp_display_start = app_current_time();
+                return BTN_ACCEPTED;
             }
-            break;
+            return BTN_IGNORED;
         }
         default: break; // prevent complaining
     }
+    return BTN_IGNORED;
 }
 
 void update_rc_display(void) {
@@ -384,17 +403,23 @@ void update_rc_display(void) {
     }
 }
 
-static void config_adjust_time(uint16_t *time_mins_dest, const bitmask8_t pressed) {
+static btn_feedback_t config_adjust_time(uint16_t *time_mins_dest, const bitmask8_t pressed) {
     const uint16_t to_change = (config_time_edit_minutes ? CONFIG_TIME_MINUTES_STEP : 60);
     if (pressed & RC_BTN_INCR) {
         if (*time_mins_dest + to_change <= MAX_CONFIG_TIME_MINS) {
             *time_mins_dest += to_change;
+            return BTN_ACCEPTED;
         }
-    } else if (pressed & RC_BTN_DECR) {
+        return BTN_REJECTED;
+    }
+    if (pressed & RC_BTN_DECR) {
         if (*time_mins_dest >= to_change + MIN_CONFIG_TIME_MINS) {
             *time_mins_dest -= to_change;
+            return BTN_ACCEPTED;
         }
+        return BTN_REJECTED;
     }
+    return BTN_IGNORED;
 }
 
 static inline void app_display_countdown(const bool blink, const uint32_t time_left_secs) {
@@ -449,9 +474,13 @@ void start_cooking_program(void) {
     // if "DELAY" configured before -> start countdown
     if (delayed_mode_configured) {
         timestamp_delayed_start = app_current_time();
-        app_state = STATE_DELAYED_COUNTDOWN;
+        set_app_state(STATE_DELAYED_COUNTDOWN);
+        // play the delayed start jingle
+        melodies_play_one( MELODY_DELAYED_START, false);
         return;
     }
+    // play the delayed start jingle
+    melodies_play_one( MELODY_COOK_START, false);
     // else exec normal cooking proc
     start_task_cooking_now();
 }
@@ -541,10 +570,12 @@ void on_platform_tick(void) {
             // only fire event on btn press (not release)
             const bitmask8_t changed = current_inp_mask & ~last_input_mask;
             if (changed) {
-                // TODO: JINGLE
-                uint16_t msize;
-                buzzer_play_melody(get_melody(MELODY_RF_ANTHEM, &msize), msize);
-                app_on_btns_press(changed);
+                const btn_feedback_t feedback = app_on_btns_press(changed);
+                switch (feedback) {
+                    case BTN_ACCEPTED: melodies_play_one(MELODY_BTN_ACCEPTED, false); break;
+                    case BTN_REJECTED: melodies_play_one( MELODY_BTN_REJECTED, false); break;
+                    case BTN_ACCEPTED_SELF: case BTN_IGNORED: break; // dont play any sound
+                }
             }
             last_input_mask = current_inp_mask;
         }
@@ -627,13 +658,13 @@ static float monotonic_get_target_temp(const uint32_t stage_elapsed_mins) {
 
 void start_task_cooking_now(void) {
     if (cooking_mode == MODE_HOLD_WARM) {
-        app_state = STATE_HOLD_WARM;
+        set_app_state(STATE_HOLD_WARM);
         heater_set_target_pot_temp(COOKING_KEEP_WARM_TEMP);
         heater_set_enabled(true);
         return;
     }
 
-    app_state = STATE_COOKING;
+    set_app_state(STATE_COOKING);
     timestamp_cook_start = app_current_time();
 
     // manual mode have no profile and static temp
@@ -725,19 +756,25 @@ void on_cooking_pltick(const uint32_t current_time) {
 }
 
 void on_cooking_complete(void) {
-    // TODO play a jingle
-
+    const cooking_mode_t last_cook_mode = cooking_mode;
     bool auto_hold_warm = manual_mode_auto_warm;
     if (active_profile != nullptr) {
         auto_hold_warm = active_profile->auto_hold_warm;
     }
 
     if (auto_hold_warm) {
-        cooking_mode = MODE_HOLD_WARM;
+        set_cooking_mode(MODE_HOLD_WARM);
         start_task_cooking_now();
-        return;
+    } else {
+        reset_app_state(STATE_IDLE);
     }
-    reset_app_state(STATE_IDLE);
+
+    // play the completion jingle
+    switch (last_cook_mode) {
+        case MODE_MANUAL_USER: melodies_play_one(MELODY_COMPLETION_ELISE, false); break;
+        case MODE_FLAN_DRE: melodies_play_one( MELODY_COMPLETION_OWEN, false); break;
+        default: melodies_play_one( MELODY_COMPLETION_DEFAULT, false); break;
+    }
 }
 
 //// APPLICATION EXTERNAL CONTROL LOGIC /////
@@ -797,7 +834,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
                 goto resp_nak;
             }
             reset_app_state(STATE_IDLE); // reset to a safe state first
-            cooking_mode = cook_preset;
+            set_cooking_mode(cook_preset);
             start_cooking_program();
             goto resp_ack;
         }
@@ -809,7 +846,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             const bool set_auto_warm = payload[3] & 1;
 
             if (reset_and_configure_manual_mode(set_temp, set_time_mins, set_auto_warm)) {
-                cooking_mode = MODE_MANUAL_USER;
+                set_cooking_mode(MODE_MANUAL_USER);
                 start_cooking_program();
                 goto resp_ack;
             }
@@ -837,8 +874,8 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
 
                 if (reset_and_configure_manual_mode(set_temp, set_time_mins, set_auto_warm)) {
                     delayed_mode_time_mins = delay_time_mins;
-                    cooking_mode = MODE_MANUAL_USER;
                     delayed_mode_configured = true;
+                    set_cooking_mode(MODE_MANUAL_USER);
                     start_cooking_program();
                     goto resp_ack;
                 }
@@ -847,7 +884,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
             // normal delayed with preset
             reset_app_state(STATE_IDLE); // reset to a safe state first
             delayed_mode_time_mins = delay_time_mins;
-            cooking_mode = cook_mode;
+            set_cooking_mode(cook_mode);
             delayed_mode_configured = true;
             start_cooking_program();
             goto resp_ack;

@@ -7,7 +7,7 @@ typedef struct {
     uint16_t duration_ms;
 } buzzer_note_t;
 
-void buzzer_play_melody(const buzzer_note_t* track, uint16_t track_size);
+void buzzer_play_melody(const buzzer_note_t* track, uint16_t track_size, bool loop_track);
 void buzzer_stop_melody();
 
 void buzzer_sys_init(void);

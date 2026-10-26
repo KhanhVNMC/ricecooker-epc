@@ -8,16 +8,18 @@ static const xthread_mutex_t  *mutex;
 static const buzzer_note_t *current_track = nullptr;
 static uint16_t current_track_size = 0;
 static uint16_t current_note_index = 0;
+static bool current_track_loop = false;
 
 static bool is_playable() {
     return current_track != nullptr && current_track_size != 0 && current_note_index < current_track_size;
 }
 
-void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size) {
+void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size, const bool loop_track) {
     xthreads_mutex_acquire(mutex);
     current_track = track;
     current_track_size = track_size;
     current_note_index = 0;
+    current_track_loop = loop_track;
     if (is_playable()) {
         // wake the buzzer thread up
         xthreads_notify(thread_handle);
@@ -26,7 +28,7 @@ void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size) {
 }
 
 void buzzer_stop_melody() {
-    buzzer_play_melody(nullptr, 0);
+    buzzer_play_melody(nullptr, 0, false);
 }
 
 void buzzer_sys_init() {
@@ -47,6 +49,9 @@ void task_buzzer_update_thread(void *args) {
         }
         // track ALWAYS point to static/malloced memory
         const buzzer_note_t *current_note = &current_track[current_note_index++];
+        if (current_track_loop && current_note_index >= current_track_size) {
+            current_note_index = 0;
+        }
         xthreads_mutex_release(mutex);
 
         // play the note & sleep (the note still plays)

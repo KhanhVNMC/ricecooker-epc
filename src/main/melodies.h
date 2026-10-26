@@ -72,10 +72,17 @@
 #define NOTE_B7     (3951u)
 
 typedef enum : uint8_t {
-    MELODY_KATYUSHA,
-    MELODY_RF_ANTHEM,
+    MELODY_BTN_ACCEPTED,
+    MELODY_BTN_REJECTED,
+    MELODY_SYSTEM_ERROR,
+    MELODY_COOK_START,
+    MELODY_DELAYED_START,
+    MELODY_COMPLETION_DEFAULT,
+    MELODY_COMPLETION_OWEN,
+    MELODY_COMPLETION_ELISE,
 } melody_id_t;
 
-const buzzer_note_t *get_melody(melody_id_t melody, uint16_t *out_melody_size);
+void melodies_play_one(melody_id_t melody, bool loop_melody);
+const buzzer_note_t* melodies_get_one(melody_id_t melody, uint16_t *out_melody_size);
 
 #endif //MELODIES_H

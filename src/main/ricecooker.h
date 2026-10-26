@@ -37,6 +37,13 @@ typedef enum : uint8_t  {
     COUNT_COOKING_MODES
 } cooking_mode_t;
 
+typedef enum : uint8_t {
+    BTN_ACCEPTED,
+    BTN_ACCEPTED_SELF,
+    BTN_REJECTED,
+    BTN_IGNORED,
+} btn_feedback_t;
+
 typedef struct {
     uint8_t digit;
     bitmask8_t segment;
