@@ -471,17 +471,15 @@ void task_main_app_thread(void *args) {
 }
 
 void start_cooking_program(void) {
-    // if "DELAY" configured before -> start countdown
+    // IF "DELAY" configured before -> start countdown
     if (delayed_mode_configured) {
         timestamp_delayed_start = app_current_time();
         set_app_state(STATE_DELAYED_COUNTDOWN);
-        // play the delayed start jingle
-        melodies_play_one( MELODY_DELAYED_START, false);
+        melodies_play_one(MELODY_DELAYED_START, false); // delayed start jingle
         return;
     }
-    // play the delayed start jingle
-    melodies_play_one( MELODY_COOK_START, false);
-    // else exec normal cooking proc
+    melodies_play_one(MELODY_COOK_START, false); // immediate start jingle
+    // ELSE exec normal cooking proc
     start_task_cooking_now();
 }
 
@@ -573,7 +571,7 @@ void on_platform_tick(void) {
                 const btn_feedback_t feedback = app_on_btns_press(changed);
                 switch (feedback) {
                     case BTN_ACCEPTED: melodies_play_one(MELODY_BTN_ACCEPTED, false); break;
-                    case BTN_REJECTED: melodies_play_one( MELODY_BTN_REJECTED, false); break;
+                    case BTN_REJECTED: melodies_play_one(MELODY_BTN_REJECTED, false); break;
                     case BTN_ACCEPTED_SELF: case BTN_IGNORED: break; // dont play any sound
                 }
             }
@@ -772,8 +770,8 @@ void on_cooking_complete(void) {
     // play the completion jingle
     switch (last_cook_mode) {
         case MODE_MANUAL_USER: melodies_play_one(MELODY_COMPLETION_ELISE, false); break;
-        case MODE_FLAN_DRE: melodies_play_one( MELODY_COMPLETION_OWEN, false); break;
-        default: melodies_play_one( MELODY_COMPLETION_DEFAULT, false); break;
+        case MODE_FLAN_DRE: melodies_play_one(MELODY_COMPLETION_OWEN, false); break;
+        default: melodies_play_one(MELODY_COMPLETION_DEFAULT, false); break;
     }
 }
 

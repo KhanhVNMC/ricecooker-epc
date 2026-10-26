@@ -47,6 +47,8 @@ static const buzzer_note_t ERROR_NOTES[] = {
     { NOTE_A6, 150 }, { NOTE_REST, 700 }
 }; // looped
 
+// THIS IS NOT A PLAY QUEUE, WHATEVER PLAYS LAST WINS
+// so: melodies_play_one(SMT) -> melodies_play_one(SMT2) << this wins, SMT silenced
 void melodies_play_one(const melody_id_t melody, const bool loop_melody) {
     uint16_t note_len;
     buzzer_play_melody(melodies_get_one(melody, &note_len), note_len, loop_melody);

@@ -14,6 +14,8 @@ static bool is_playable() {
     return current_track != nullptr && current_track_size != 0 && current_note_index < current_track_size;
 }
 
+// THIS IS NOT A PLAY QUEUE, WHATEVER PLAYS LAST WINS
+// track must be pointing to static mem OR heap & still valid alloc
 void buzzer_play_melody(const buzzer_note_t* track, const uint16_t track_size, const bool loop_track) {
     xthreads_mutex_acquire(mutex);
     current_track = track;
