@@ -474,8 +474,8 @@ void start_cooking_program(void) {
     // IF "DELAY" configured before -> start countdown
     if (delayed_mode_configured) {
         timestamp_delayed_start = app_current_time();
-        set_app_state(STATE_DELAYED_COUNTDOWN);
         melodies_play_one(MELODY_DELAYED_START, false); // delayed start jingle
+        set_app_state(STATE_DELAYED_COUNTDOWN);
         return;
     }
     melodies_play_one(MELODY_COOK_START, false); // immediate start jingle
@@ -495,7 +495,7 @@ static void faults_report_to_ecc(const uint8_t metadata) {
     }
 }
 
-static void watchdog_platform_tick(const uint32_t current_time) {
+static void cooking_watchdog_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 33 -> 63)
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
@@ -545,7 +545,7 @@ void on_platform_tick(void) {
     }
     // platform tick while cooking
     if (app_state == STATE_COOKING || app_state == STATE_HOLD_WARM) {
-        watchdog_platform_tick(current_time);
+        cooking_watchdog_tick(current_time);
         // watchdog could perform a reset to ERROR, so guard against it
         if (app_state == STATE_COOKING || app_state == STATE_HOLD_WARM) {
             on_cooking_pltick(current_time);
@@ -655,6 +655,7 @@ static float monotonic_get_target_temp(const uint32_t stage_elapsed_mins) {
 }
 
 void start_task_cooking_now(void) {
+    // holding warm is technically NOT a cooking mode, it is a system state!
     if (cooking_mode == MODE_HOLD_WARM) {
         set_app_state(STATE_HOLD_WARM);
         heater_set_target_pot_temp(COOKING_KEEP_WARM_TEMP);
@@ -662,8 +663,8 @@ void start_task_cooking_now(void) {
         return;
     }
 
-    set_app_state(STATE_COOKING);
     timestamp_cook_start = app_current_time();
+    set_app_state(STATE_COOKING);
 
     // manual mode have no profile and static temp
     if (cooking_mode == MODE_MANUAL_USER) {
