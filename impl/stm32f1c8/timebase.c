@@ -7,7 +7,7 @@
 
 static TIM_HandleTypeDef tim3_tick_timer; // handle for the TIM3 device
 
-HAL_StatusTypeDef HAL_InitTick(const uint32_t TickPriority) {
+HAL_StatusTypeDef HAL_InitTick(const uint32_t) {
     __HAL_RCC_TIM3_CLK_ENABLE(); // enable the TIM3 clock so it clocks (wtf am i saying)
 
     // this finds the input clock of TIM3 so we can scale it down correctly
@@ -34,8 +34,8 @@ HAL_StatusTypeDef HAL_InitTick(const uint32_t TickPriority) {
         return HAL_ERROR;
     }
 
-    // register TIM3 to the irq controller, and enable irq
-    HAL_NVIC_SetPriority(TIM3_IRQn, TickPriority, 0U);
+    // register TIM3 to the irq controller, and enable irq, set prio to 0 so kernel wont mask it
+    HAL_NVIC_SetPriority(TIM3_IRQn, 0U, 0U);
     HAL_NVIC_EnableIRQ(TIM3_IRQn);
     return HAL_TIM_Base_Start_IT(&tim3_tick_timer);
 }

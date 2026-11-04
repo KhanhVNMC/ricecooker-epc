@@ -37,7 +37,7 @@ static bool heater_switched_on = false;
 static TIM_HandleTypeDef tim4_pwm_timer;
 static void rc_buzzer_init_tim4(void);
 
-void rc_init_rchal(void) {
+void rc_rchal_init(void) {
     // enable ports and ADCs
     __HAL_RCC_GPIOA_CLK_ENABLE();
     __HAL_RCC_GPIOB_CLK_ENABLE();

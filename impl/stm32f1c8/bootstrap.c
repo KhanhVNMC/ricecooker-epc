@@ -57,17 +57,17 @@ static void stm32_clock_init(void) {
 }
 
 // called to setup necessary platform bullshit
-static void platform_init_primitives(void) {
+static void platform_primitives_init(void) {
     HAL_Init(); // HAL
     stm32_clock_init(); // osil and PLL
     mt_us_timer_init(); // us timer
-    rc_init_rchal(); // rice cooker hal
-    ecc_init_stack();
+    rc_rchal_init(); // rice cooker hal
+    ecc_stack_init(); // external cmd control
 }
 
 // global entrypoint
 int main(void) {
-    platform_init_primitives();
+    platform_primitives_init();
     platform_main(); // this should NEVER return
     platform_on_error(APPLICATION_INIT);
 }

@@ -287,7 +287,7 @@ bool ecc_is_layer_ready(void) {
 #ifdef COMPILED_FOR_PROTEUS_8_17
 __attribute__((optimize(0)))
 #endif
-bool ecc_init_stack(void) {
+bool ecc_stack_init(void) {
     usb_initialized = false;
     // DIRTY LITTLE HACK: force USB reenumeration by stealing A12 (D+ of usb)
     // for 10ms and pull it low so the host request enumeration again when we return it to usb

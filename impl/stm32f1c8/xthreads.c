@@ -6,7 +6,8 @@
 #include "task.h"
 #include "semphr.h"
 
-void platform_start_xthreads_sched(void) {
+// xthreads scheduler
+void platform_xscheduler_start(void) {
     vTaskStartScheduler();
     platform_on_error(SCHEDULER_INIT);
 }
@@ -95,6 +96,8 @@ xthread_mutex_t* xthreads_mutex_new(void) {
     return xSemaphoreCreateMutex();
 }
 
+// this runs fine in unthreaded code (pre-xthreads), make sure to release it before though;
+// otherwise it will fucking deadlock once xthreads take over
 bool xthreads_mutex_acquire(const xthread_mutex_t *mutex) {
     if (mutex == nullptr) {
         return false;
