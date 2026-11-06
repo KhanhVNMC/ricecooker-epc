@@ -1,0 +1,78 @@
+name: Build firmware
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '*.docx'
+      - '*.zip'
+      - 'proteus/**'
+  pull_request:
+    paths-ignore:
+      - '*.docx'
+      - '*.zip'
+      - 'proteus/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: ${{ matrix.preset }}
+    runs-on: ubuntu-latest
+    container: debian:13
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - preset: stm32f1c8-release
+            dir: release
+          - preset: stm32f1c8-debug
+            dir: debug
+          - preset: stm32f1c8-release-proteus
+            dir: proteus-release
+
+    steps:
+      - name: Install toolchain
+        run: |
+          apt-get update
+          apt-get install -y --no-install-recommends ca-certificates git make cmake gcc-arm-none-eabi libnewlib-arm-none-eabi binutils-arm-none-eabi
+
+      - uses: actions/checkout@v4
+
+      - name: Configure CMake
+        run: cmake --preset ${{ matrix.preset }}
+
+      - name: Build the firmware
+        run: cmake --build --preset ${{ matrix.preset }}
+
+      - name: Summarize
+        shell: bash
+        working-directory: artifacts/stm32f1c8/${{ matrix.dir }}
+        run: |
+          {
+            echo "### Preset: ${{ matrix.preset }}"
+            echo '```'
+            arm-none-eabi-gcc --version | head -1
+            arm-none-eabi-size ricecooker.elf
+            sha256sum ricecooker.bin ricecooker.hex
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ricecooker-${{ matrix.dir }}-${{ github.sha }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.elf
+            artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.stripped.elf
+            artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.hex
+            artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.bin
+            artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.map
+
