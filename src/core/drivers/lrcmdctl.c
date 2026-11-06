@@ -47,27 +47,28 @@ ecc_rx_result_t ecc_on_rx_data(const uint8_t *data, const uint32_t len) {
     return ECC_RX_PARTIAL;
 }
 
-bool lrcmdctl_ob_send_generic(
+static uint8_t ob_datagram_buf[ECC_MAX_DATAGRAM_SIZE];
+// this is NOT thread safe anymore! uses static mem now
+static bool lrcmdctl_ob_send_generic(
     const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size,
     const bool wait_until_ready
 ) {
     if (!ecc_is_layer_ready()) {
         return false;
     }
-    // this will just refuse to send if the payload is > 125 bytes
-    if (payload_size > ECC_MAX_DATAGRAM_SIZE - 3u) {
+    // this will just refuse to send if the payload is > 253 bytes
+    const uint16_t datagram_size = payload_size + 3u;
+    if (datagram_size > ECC_MAX_DATAGRAM_SIZE) {
         return false;
     }
-    const uint16_t datagram_size = payload_size + 3u;
-    uint8_t frame[datagram_size];
     // datagram: [size (2)][resp type (1)][payload]
-    frame[0] = (uint8_t)(datagram_size >> 8u);
-    frame[1] = (uint8_t)(datagram_size & 0xFFu);
-    frame[2] = resp_type;
+    ob_datagram_buf[0] = (uint8_t)(datagram_size >> 8u);
+    ob_datagram_buf[1] = (uint8_t)(datagram_size & 0xFFu);
+    ob_datagram_buf[2] = resp_type;
     if (payload_size != 0) {
-        memcpy(&frame[3], payload, payload_size);
+        memcpy(&ob_datagram_buf[3], payload, payload_size);
     }
-    return (wait_until_ready ? ecc_tx_data : ecc_tx_data_async)(frame, datagram_size);
+    return (wait_until_ready ? ecc_tx_data : ecc_tx_data_async)(ob_datagram_buf, datagram_size);
 }
 
 bool lrcmdctl_ob_send(const ob_resp_type_t resp_type, const uint8_t *payload, const uint16_t payload_size) {
