@@ -11,17 +11,18 @@ static xthread_handle_t *HEATER_UPDATE_THREAD;
 static xthread_handle_t *BUZZER_UPDATE_THREAD;
 
 static void app_threads_init(void) {
+    // [name]::[identifier_digits]
     HEATER_UPDATE_THREAD = xthreads_new(
         task_heater_update_thread, nullptr,
-        OBERSTER_FUHRER_DER_SS, "Adolf Heater"
-    ); // hail heater
+        XTHREADS_CHANCELLOR, "Heater::8945"
+    ); // most critical thread
     MAIN_APP_THREAD = xthreads_new(
         task_main_app_thread, nullptr,
-        SS_OBERFUHRER, "Hermainn Goring"
-    ); // close enough
+        XTHREADS_PRIO_HIGH, "Main::9346"
+    ); // 2nd most critical thread
     BUZZER_UPDATE_THREAD = xthreads_new(
         task_buzzer_update_thread, nullptr,
-        SS_STANDARTENFUHRER, "Joachim Peeper"
+        XTHREADS_PRIO_MEDIUM, "Peeper::1576"
     ); // beep beep
 
     if (!HEATER_UPDATE_THREAD || !MAIN_APP_THREAD || !BUZZER_UPDATE_THREAD) {

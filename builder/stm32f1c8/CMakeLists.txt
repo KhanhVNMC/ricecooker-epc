@@ -6,7 +6,7 @@ add_compile_options(-gdwarf-2)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
-set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/impl/stm32f1c8")
+set(STM32_PLATFORM_DIR "${RICECOOKER_ROOT}/src/platform/stm32f1c8")
 set(STM32_DEVICES_CONFIG_DIR "${STM32_PLATFORM_DIR}/dcfg")
 
 # configure freertos params
@@ -18,7 +18,7 @@ target_compile_definitions(freertos_config INTERFACE STM32F103xB)
 include("${RICECOOKER_ROOT}/cmake/dependencies/stm32f1.cmake")
 
 # shared lib with the unix harness
-add_subdirectory("${RICECOOKER_ROOT}/src" "${CMAKE_CURRENT_BINARY_DIR}/ricecooker_core")
+add_subdirectory("${RICECOOKER_ROOT}/src/core" "${CMAKE_CURRENT_BINARY_DIR}/ricecooker_core")
 
 # platform impl
 file(GLOB_RECURSE STM32_PLATFORM_SOURCES CONFIGURE_DEPENDS

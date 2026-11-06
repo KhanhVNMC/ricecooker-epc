@@ -11,13 +11,13 @@ typedef void (*xthread_func_t)(void *args);
 typedef void xthread_handle_t;
 typedef void xthread_mutex_t;
 
-// https://en.wikipedia.org/wiki/Ranks_and_insignia_of_the_Waffen-SS
+// its boring now, damn...
 typedef enum : uint8_t {
-    SS_STURMSCHARFUHRER = 0,
-    SS_STANDARTENFUHRER = 1,
-    SS_OBERFUHRER = 2,
-    SS_GRUPPENFUHRER = 3,
-    OBERSTER_FUHRER_DER_SS = 4,
+    XTHREADS_PRIO_LOWEST = 0,
+    XTHREADS_PRIO_LOW = 1,
+    XTHREADS_PRIO_MEDIUM = 2,
+    XTHREADS_PRIO_HIGH = 3,
+    XTHREADS_CHANCELLOR = 4, // i get to keep something
 } thread_priority_t;
 
 typedef enum : uint8_t {
