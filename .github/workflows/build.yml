@@ -76,3 +76,52 @@ jobs:
             artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.bin
             artifacts/stm32f1c8/${{ matrix.dir }}/ricecooker.map
 
+  release:
+    name: Publish release
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: flower-saint-release
+      TITLE: Ricecooker Firmware
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: ricecooker-*-${{ github.sha }}
+          path: downloaded
+
+      - name: Prepare assets
+        shell: bash
+        run: |
+          mkdir dist
+          for preset in release debug proteus-release; do
+            for file in downloaded/ricecooker-"$preset"-"$GITHUB_SHA"/*; do
+              name=$(basename "$file")
+              cp "$file" "dist/${name/ricecooker/ricecooker-$preset}"
+            done
+          done
+          (cd dist && sha256sum * > SHA256SUMS)
+          {
+            echo "Built from $GITHUB_SHA"
+            echo
+            echo '```'
+            cat dist/SHA256SUMS
+            echo '```'
+          } > notes.md
+
+      - name: Publish
+        shell: bash
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh api -X PATCH "repos/$GH_REPO/git/refs/tags/$TAG" -f sha="$GITHUB_SHA" -F force=true
+            gh release edit "$TAG" --title "$TITLE" --notes-file notes.md
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --title "$TITLE" --notes-file notes.md --target "$GITHUB_SHA"
+          fi
+
