@@ -52,6 +52,7 @@ add_library(stm32_hal STATIC
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_flash.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_flash_ex.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_gpio.c"
+    "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_iwdg.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_rcc.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_rcc_ex.c"
     "${stm32f1_hal_SOURCE_DIR}/Src/stm32f1xx_hal_tim.c"

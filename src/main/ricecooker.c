@@ -10,6 +10,7 @@
 #include "include/buzzerctl.h"
 #include "include/ecclayer.h"
 #include "include/lrcmdctl.h"
+#include "include/platform.h"
 
 #define APP_MAIN_INTERVAL_MS         (20u)
 #define APP_BLINK_INTERVAL_MS        (500u)
@@ -922,5 +923,10 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
 ///// INIT SHIT /////
 void ricecooker_init(void) {
     display_set_enabled(true); // turn the screen on
+    if (platform_is_erroneous_reset()) {
+        system_error_code = 99; // SYSHANG ERROR
+        reset_app_state(STATE_SYSTEM_ERROR);
+        return;
+    }
     reset_app_state(STATE_IDLE); // initial boot
 }

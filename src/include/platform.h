@@ -22,4 +22,8 @@ void platform_main(void);
 // error handling
 void platform_on_error(platform_error_t err);
 
+// watchdog
+void platform_watchdog_pet(void);
+bool platform_is_erroneous_reset(void);
+
 #endif //PLATFORM_H

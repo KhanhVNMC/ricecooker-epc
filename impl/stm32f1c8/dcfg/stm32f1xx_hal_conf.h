@@ -10,6 +10,7 @@
 #define HAL_GPIO_MODULE_ENABLED
 #define HAL_RCC_MODULE_ENABLED
 #define HAL_TIM_MODULE_ENABLED
+#define HAL_IWDG_MODULE_ENABLED
 
 #ifndef HSE_VALUE
 #define HSE_VALUE 8000000U
@@ -69,6 +70,9 @@
 #endif
 #ifdef HAL_PCD_MODULE_ENABLED
 #include "stm32f1xx_hal_pcd.h"
+#endif
+#ifdef HAL_IWDG_MODULE_ENABLED
+#include "stm32f1xx_hal_iwdg.h"
 #endif
 
 #ifdef USE_FULL_ASSERT

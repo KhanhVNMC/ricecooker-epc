@@ -1,5 +1,6 @@
 #include "include/heaterctl.h"
 #include "include/cmath.h"
+#include "include/platform.h"
 #include "include/xthreads.h"
 
 #define HEATER_ELEMENT_MAX_SAFETY_CEILING   (320.f)
@@ -57,6 +58,9 @@ float heater_read_cached_sensor(const rc_temp_sensor_t sensor) {
 
 void task_heater_update_thread(void *args) {
     while (1) {
+        // Pet watchdog trong thread heater (mỗi 25ms)
+        platform_watchdog_pet();
+
         // cache here so other threads can read w/o contention
         cached_sensors_data[RC_SENSOR_POT] = rc_sensor_get_temp(RC_SENSOR_POT);
         cached_sensors_data[RC_SENSOR_HEATER] = rc_sensor_get_temp(RC_SENSOR_HEATER);

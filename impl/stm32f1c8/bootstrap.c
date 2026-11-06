@@ -56,9 +56,28 @@ static void stm32_clock_init(void) {
     }
 }
 
+static IWDG_HandleTypeDef watchdog_def = {
+    .Instance = IWDG,
+    .Init.Prescaler = IWDG_PRESCALER_32,
+    .Init.Reload = 999 // Deadline trong 0.5-0.8s
+};
+
+void platform_watchdog_pet(void) {
+    // Mỗi 0.8s phải pet không thì nó reset cả mạch
+    HAL_IWDG_Refresh(&watchdog_def);
+}
+
+bool platform_is_erroneous_reset(void) {
+    // trả về true nếu hệ thống bị treo trước khi bi reset
+    const bool err = __HAL_RCC_GET_FLAG(RCC_FLAG_IWDGRST);
+    __HAL_RCC_CLEAR_RESET_FLAGS();
+    return err;
+}
+
 // called to setup necessary platform bullshit
 static void platform_primitives_init(void) {
     HAL_Init(); // HAL
+    HAL_IWDG_Init(&watchdog_def); // Watchdog chống treo
     stm32_clock_init(); // osil and PLL
     mt_us_timer_init(); // us timer
     rc_rchal_init(); // rice cooker hal
