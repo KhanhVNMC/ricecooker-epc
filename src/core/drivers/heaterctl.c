@@ -4,7 +4,7 @@
 #include "include/xthreads.h"
 
 #define HEATER_ELEMENT_MAX_SAFETY_CEILING   (320.f)
-#define HEATER_ELEMENT_CONTROL_CEILING      (250.f)
+#define HEATER_ELEMENT_CONTROL_CEILING      (230.f)
 #define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
 #define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
