@@ -4,6 +4,7 @@
 #include "include/xthreads.h"
 
 #define HEATER_ELEMENT_MAX_SAFETY_CEILING   (320.f)
+#define HEATER_ELEMENT_CONTROL_CEILING      (250.f)
 #define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
 #define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
@@ -83,8 +84,14 @@ void task_heater_update_thread(void *args) {
         const uint32_t current_time = rc_time_current_millis();
         const bool heater_currently_on = rc_heater_is_on();
 
-        const bool heater_should_start = pot_tmp < local_pot_target_temp - THERMISTOR_HEADROOM;
-        const bool heater_should_stop = pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM;
+        const bool heater_should_start =
+            pot_tmp < local_pot_target_temp - THERMISTOR_HEADROOM
+            && heater_tmp <= HEATER_ELEMENT_CONTROL_CEILING
+        ;
+        const bool heater_should_stop =
+            pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM
+            || heater_tmp > HEATER_ELEMENT_CONTROL_CEILING
+        ;
 
         // overheat protection (element)
         const bool element_overheat = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;
