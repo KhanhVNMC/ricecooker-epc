@@ -3,9 +3,9 @@
 #include "include/platform.h"
 #include "include/xthreads.h"
 
-#define HEATER_ELEMENT_MAX_SAFETY_CEILING   (340.f)
-#define HEATER_ELEMENT_CONTROL_CEILING      (265.f)
-#define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
+#define HEATER_ELEMENT_MAX_SAFETY_CEILING   (360.f)
+#define HEATER_ELEMENT_CONTROL_CEILING      (270.f)
+#define HEATER_POT_MAX_SAFETY_CEILING       (165.f) // deg C
 #define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
 #define WD_ELEMENT_RISE_THRESHOLD           (15.f) // what the f is this name
@@ -14,7 +14,7 @@
 #define ALLOWED_POT_MIN_TEMP                (10.f)
 #define ALLOWED_POT_MAX_TEMP                (200.f)
 #define THERMISTOR_POT_HEADROOM             (4.f)
-#define THERMISTOR_HEATER_HEADROOM          (45.f)
+#define THERMISTOR_HEATER_HEADROOM          (60.f)
 
 #define HEATER_WATCHDOG_INTERVAL_MS         (5000)
 #define HEATERCTL_INTERVAL_MS               (25u) // ms

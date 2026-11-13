@@ -2,7 +2,7 @@
 #define RICECOOKER_TEMPSTATS_H
 #include <stdint.h>
 
-#define SAMPLES_RETENTION_SIZE  (16)
+#define SAMPLES_RETENTION_SIZE  (48)
 
 void tempstats_reset(void);
 bool tempstats_is_full(void);

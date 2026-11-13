@@ -32,7 +32,7 @@
 #define MIN_CONFIG_TIME_MINS         (1)
 #define MAX_CONFIG_TIME_MINS         (99u * 60 + 59u)
 #define MIN_CONFIG_TEMP              (60)
-#define MAX_CONFIG_TEMP              (150)
+#define MAX_CONFIG_TEMP              (110)
 
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
@@ -128,6 +128,10 @@ static void app_display_countdown(bool blink, uint32_t time_left_secs);
 static void app_display_temperature(uint16_t temp);
 // 禁弾「過去を刻む時計」: time math is intentionally wraparound safe
 static uint32_t app_current_time(void) { return app_tick_start_timestamp; }
+// heater rebase from food temp to pot temp
+static void app_set_target_food_temp(const float food_temp) {
+    heater_set_target_pot_temp(cooking_rebase_temp(food_temp));
+}
 
 void reset_app_state(const app_state_t reset_to) {
     // heater & buzzer
@@ -642,9 +646,9 @@ static bool has_water_boiled_away(void) {
         return false;
     }
 
-    // with the plateau observed, lr slope with this characteristic
-    // COULD mean water boiled away, or sth exploded
-    return linreg_slope >= WATER_BOIL_DRY_MIN_SLOPE;
+    // with the plateau observed, lr slope with tuned characteristic AND reached tuned min temp
+    // with high confident, water has boiled away, or sth foking exploded
+    return avg_temp >= WATER_BOIL_DRY_MIN_TEMP && linreg_slope >= WATER_BOIL_DRY_MIN_SLOPE;
 }
 
 static float monotonic_get_target_temp(const uint32_t stage_elapsed_mins) {
@@ -678,7 +682,7 @@ void start_task_cooking_now(void) {
     // holding warm is technically NOT a cooking mode, it is a system state!
     if (cooking_mode == MODE_HOLD_WARM) {
         set_app_state(STATE_HOLD_WARM);
-        heater_set_target_pot_temp(COOKING_KEEP_WARM_TEMP);
+        app_set_target_food_temp(COOKING_KEEP_WARM_TEMP);
         heater_set_enabled(true);
         return;
     }
@@ -689,7 +693,7 @@ void start_task_cooking_now(void) {
     // manual mode have no profile and static temp
     if (cooking_mode == MODE_MANUAL_USER) {
         active_profile = nullptr;
-        heater_set_target_pot_temp(manual_mode_temp);
+        app_set_target_food_temp(manual_mode_temp);
         heater_set_enabled(true);
         return;
     }
@@ -706,7 +710,9 @@ void start_task_cooking_now(void) {
 
     // setup the initial stage
     timestamp_stage_start = app_current_time();
-    heater_set_target_pot_temp(monotonic_get_target_temp(0u));
+    app_set_target_food_temp(
+        monotonic_get_target_temp(0u)
+    );
     heater_set_enabled(true);
 }
 
@@ -733,7 +739,7 @@ void on_cooking_pltick(const uint32_t current_time) {
     const float actual_pot_temp = heater_read_cached_sensor(RC_SENSOR_POT);
 
     // this only meaningfully change every min, but, better safe than sorry
-    heater_set_target_pot_temp(monotonic_get_target_temp(
+    app_set_target_food_temp(monotonic_get_target_temp(
         stage_elapsed_ms / 60000u
     ));
 
@@ -746,7 +752,7 @@ void on_cooking_pltick(const uint32_t current_time) {
             break;
         }
         case TRIGGER_POT_TEMP_REACHED: { // or timeout
-            if (actual_pot_temp >= current_stage->temp_reached_threshold ||
+            if (actual_pot_temp >= current_stage->temp_reached_threshold || // not rebased
                 stage_elapsed_ms >= current_stage->ceiling_duration_ms
             ) {
                 advance_stage = true;

@@ -1,15 +1,25 @@
 #include "cookingprofile.h"
 #include "include/cmath.h"
 
-// 1. Nấu cơm bình thường (Ngâm 60°C -> Đun sôi 100°C cạn nước -> Ủ chín 95°C -> Giữ ấm)
+// all setpoints here are FOOD temperatures; the pot is always hotter than the
+// food, so every target here is REBASED before it reaches the heater ctler
+// EXCEPT temp_reached_threshold, that one is POT, so not rebased
+
+// 1. Nấu cơm bình thường (Ngâm -> Đun sôi tới cạn nước -> Ủ chín -> Giữ ấm)
 static const temp_setpoint_t STAGE_NORMAL_SOAK_POINTS[] = {
-    {0u, 25.0f}, {5u, 40.0f}, {15u, 40.0f}
+    {0u, 25.0f},
+    {5u, 40.0f},
+    {15u, 40.0f}
 };
 static const temp_setpoint_t STAGE_NORMAL_BOIL_POINTS[] = {
-    {0u, 40.0f}, {5u, 100.0f}, {20u, 100.0f}
+    {0u, 40.0f},
+    {5u, COOKING_BOIL_DRIVE_TEMP},
+    {35u, COOKING_BOIL_DRIVE_TEMP}
 };
 static const temp_setpoint_t STAGE_NORMAL_COOK_POINTS[] = {
-    {0u, 100.0f}, {5u, 80.0f}, {17u, 80.0f}
+    {0u, 85.0f},
+    {5u, 80.0f},
+    {17u, 80.0f}
 };
 static const cooking_stage_t STAGES_RICE_NORMAL[] = {
     {
@@ -23,8 +33,8 @@ static const cooking_stage_t STAGES_RICE_NORMAL[] = {
         .temp_setpoints = STAGE_NORMAL_BOIL_POINTS,
         .temp_setpoint_count = arrsize(STAGE_NORMAL_BOIL_POINTS),
         .trigger_type = TRIGGER_WATER_BOIL_DRY,
-        .ceiling_duration_ms = 20u * 60u * 1000u, // timeout an toàn 20 phút
-        .temp_reached_threshold = 105.0f // ngưỡng phát hiện cạn nước
+        .ceiling_duration_ms = 35u * 60u * 1000u, // timeout an toàn 35 phút
+        .temp_reached_threshold = 0.0f // không dùng: cạn nước do has_water_boiled_away() quyết định
     },
     {
         .temp_setpoints = STAGE_NORMAL_COOK_POINTS,
@@ -41,20 +51,24 @@ static const cooking_profile_t PROFILE_RICE_NORMAL = {
     .auto_hold_warm = true
 };
 
-// 2. Nấu cơm nhanh (Đun sôi tối đa 100°C cạn nước -> Ủ nhanh 95°C -> Giữ ấm)
+// 2. Nấu cơm nhanh (Đun sôi tới cạn nước -> Ủ nhanh -> Giữ ấm)
 static const temp_setpoint_t STAGE_FAST_BOIL_POINTS[] = {
-    {0u, 25.0f}, {5u, 100.0f}, {15u, 100.0f}
+    {0u, 25.0f},
+    {5u, COOKING_BOIL_DRIVE_TEMP},
+    {30u, COOKING_BOIL_DRIVE_TEMP}
 };
 static const temp_setpoint_t STAGE_FAST_COOK_POINTS[] = {
-    {0u, 100.0f}, {5u, 95.0f}, {20u, 95.0f}
+    {0u, 90.0f},
+    {5u, 85.0f},
+    {20u, 85.0f}
 };
 static const cooking_stage_t STAGES_FAST_RICE[] = {
     {
         .temp_setpoints = STAGE_FAST_BOIL_POINTS,
         .temp_setpoint_count = arrsize(STAGE_FAST_BOIL_POINTS),
         .trigger_type = TRIGGER_WATER_BOIL_DRY,
-        .ceiling_duration_ms = 15u * 60u * 1000u, // timeout an toàn 15 phút
-        .temp_reached_threshold  = 105.0f
+        .ceiling_duration_ms = 30u * 60u * 1000u, // timeout an toàn 30 phút
+        .temp_reached_threshold  = 0.0f
     },
     {
         .temp_setpoints = STAGE_FAST_COOK_POINTS,
@@ -71,23 +85,29 @@ static const cooking_profile_t PROFILE_FAST_RICE = {
     .auto_hold_warm = true
 };
 
-// 3. Nấu cháo (Đun sôi 100°C -> Sôi lăn tăn nhỏ lửa 88°C chống trào bọt -> Giữ ấm)
+// 3. Nấu cháo (Đun sôi -> Sôi lăn tăn nhỏ lửa chống trào bọt -> Giữ ấm)
 static const temp_setpoint_t STAGE_PORRIDGE_BOIL_POINTS[] = {
-    {0u, 25.0f}, {5u, 100.0f}, {15u, 100.0f}
+    {0u, 25.0f},
+    {5u, COOKING_BOIL_DRIVE_TEMP},
+    {20u, COOKING_BOIL_DRIVE_TEMP}
 };
 static const temp_setpoint_t STAGE_PORRIDGE_SIMMER_POINTS[] = {
-    {0u, 100.0f}, {5u, 97.0f}, {40u, 97.0f}
+    {0u, 95.0f},
+    {5u, 92.0f},
+    {40u, 92.0f}
 };
 static const temp_setpoint_t STAGE_PORRIDGE_FINISH_POINTS[] = {
-    {0u, 97.0f}, {3u, 90.0f}, {8u, 90.0f}
+    {0u, 92.0f},
+    {3u, 88.0f},
+    {8u, 88.0f}
 };
 static const cooking_stage_t STAGES_PORRIDGE[] = {
     {
         .temp_setpoints = STAGE_PORRIDGE_BOIL_POINTS,
         .temp_setpoint_count = arrsize(STAGE_PORRIDGE_BOIL_POINTS),
         .trigger_type = TRIGGER_POT_TEMP_REACHED,
-        .ceiling_duration_ms  = 15u * 60u * 1000u, // timeout nếu quá 15 phút chưa sôi
-        .temp_reached_threshold = 100.f // đạt điểm sôi
+        .ceiling_duration_ms  = 20u * 60u * 1000u, // timeout nếu quá 20 phút chưa sôi
+        .temp_reached_threshold = COOKING_BOIL_REACHED_TEMP // đạt điểm sôi
     },
     {
         .temp_setpoints = STAGE_PORRIDGE_SIMMER_POINTS,
@@ -114,21 +134,26 @@ static const cooking_profile_t PROFILE_PORRIDGE = {
 
 // 4. Ninh / Hầm mềm 
 static const temp_setpoint_t STAGE_SOFT_BOIL_POINTS[] = {
-    {0u, 25.0f}, {10u, 100.0f}, {20u, 100.0f}
+    {0u, 25.0f},
+    {10u, COOKING_BOIL_DRIVE_TEMP},
+    {25u, COOKING_BOIL_DRIVE_TEMP}
 };
 static const temp_setpoint_t STAGE_SOFT_COOLDOWN_POINTS[] = {
-    {0u, 100.0f}, {5u, 75.0f}
+    {0u, 95.0f},
+    {5u, 75.0f}
 };
 static const temp_setpoint_t STAGE_SOFT_SIMMER_POINTS[] = {
-    {0u, 75.0f}, {10u, 95.0f}, {120u, 95.0f}
+    {0u, 75.0f},
+    {10u, 92.0f},
+    {120u, 92.0f}
 };
 static const cooking_stage_t STAGES_SOFT_SIMMER[] = {
     {
         .temp_setpoints = STAGE_SOFT_BOIL_POINTS,
         .temp_setpoint_count = arrsize(STAGE_SOFT_BOIL_POINTS),
         .trigger_type = TRIGGER_POT_TEMP_REACHED,
-        .ceiling_duration_ms = 20u * 60u * 1000u,
-        .temp_reached_threshold = 105.0f
+        .ceiling_duration_ms = 25u * 60u * 1000u,
+        .temp_reached_threshold = COOKING_BOIL_REACHED_TEMP
     },
     {
         .temp_setpoints = STAGE_SOFT_COOLDOWN_POINTS,
@@ -154,13 +179,13 @@ static const cooking_profile_t PROFILE_SOFT_SIMMER = {
 
 // 5. Làm bánh Flan
 static const temp_setpoint_t STAGE_FLAN_STEAM_POINTS[] = {
-    {0u, 25.0f}, {5u, 110.0f}, {10u, 110.0f}
+    {0u, 25.0f}, {5u, 87.0f}, {10u, 87.0f}
 };
 static const temp_setpoint_t STAGE_FLAN_BAKE_POINTS[] = {
-    {0u, 110.0f}, {10u, 140.0f}, {40u, 140.0f}
+    {0u, 87.0f}, {10u, 112.0f}, {40u, 112.0f}
 };
 static const temp_setpoint_t STAGE_FLAN_COOLDOWN_POINTS[] = {
-    {0u, 140.0f}, {10u, 80.0f}
+    {0u, 112.0f}, {10u, 65.0f}
 };
 static const cooking_stage_t STAGES_FLAN_DRE[] = {
     {
@@ -201,4 +226,13 @@ const cooking_profile_t* cooking_get_profile(const cooking_mode_t mode) {
         case MODE_FLAN_DRE:    return &PROFILE_FLAN_DRE;
         default:               return nullptr;
     }
+}
+
+inline float cooking_rebase_temp(const float temp) {
+    // 0 at room temp, 1 at boiling and above
+    const float scale =
+        temp >= REBASE_WATER_BOIL_TEMP ? 1.0f : temp <= REBASE_ROOM_TEMP ? 0.0f :
+        (temp - REBASE_ROOM_TEMP) / (REBASE_WATER_BOIL_TEMP - REBASE_ROOM_TEMP) // basically lerp
+    ;
+    return temp + REBASE_BOIL_TEMP_OFFSET * scale;
 }
