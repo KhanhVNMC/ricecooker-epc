@@ -7,26 +7,25 @@
 
 // 1. Nấu cơm bình thường (Ngâm -> Đun sôi tới cạn nước -> Ủ chín -> Giữ ấm)
 static const temp_setpoint_t STAGE_NORMAL_SOAK_POINTS[] = {
-    {0u, 25.0f},
-    {5u, 40.0f},
-    {15u, 40.0f}
+    {0u, 45.0f},
+    {3u, 55.0f},
+    {7u, 70.0f}
 };
 static const temp_setpoint_t STAGE_NORMAL_BOIL_POINTS[] = {
-    {0u, 40.0f},
-    {5u, COOKING_BOIL_DRIVE_TEMP},
-    {35u, COOKING_BOIL_DRIVE_TEMP}
+    {0u, 105.f},
+    {35u, COOKING_BOIL_DRIVE_TEMP},
 };
 static const temp_setpoint_t STAGE_NORMAL_COOK_POINTS[] = {
     {0u, 85.0f},
     {5u, 80.0f},
-    {17u, 80.0f}
+    {12u, 70.0f}
 };
 static const cooking_stage_t STAGES_RICE_NORMAL[] = {
     {
         .temp_setpoints = STAGE_NORMAL_SOAK_POINTS,
         .temp_setpoint_count = arrsize(STAGE_NORMAL_SOAK_POINTS),
         .trigger_type = TRIGGER_TIME_EXPIRED,
-        .ceiling_duration_ms = 15u * 60u * 1000u, // 15 phút ngâm gạo
+        .ceiling_duration_ms = 10u * 60u * 1000u, // 15 phút ngâm gạo
         .temp_reached_threshold = 0.0f
     },
     {
@@ -40,7 +39,7 @@ static const cooking_stage_t STAGES_RICE_NORMAL[] = {
         .temp_setpoints = STAGE_NORMAL_COOK_POINTS,
         .temp_setpoint_count = arrsize(STAGE_NORMAL_COOK_POINTS),
         .trigger_type = TRIGGER_TIME_EXPIRED,
-        .ceiling_duration_ms = 17u * 60u * 1000u, // 17 phút hâm nóng
+        .ceiling_duration_ms = 15u * 60u * 1000u, // 17 phút hâm nóng
         .temp_reached_threshold = 0.0f
     }
 };

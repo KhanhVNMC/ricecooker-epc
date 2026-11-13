@@ -11,7 +11,7 @@
 // FOOD degrees (rebased like every other target)
 // for stages that must boil HARD (like me)
 #define COOKING_BOIL_DRIVE_TEMP           (112.0f)
-#define COOKING_KEEP_WARM_TEMP            (65.0f)
+#define COOKING_KEEP_WARM_TEMP            (55.0f)
 
 // raw pot sensor value, NOT rebased
 #define COOKING_BOIL_REACHED_TEMP         (124.0f)

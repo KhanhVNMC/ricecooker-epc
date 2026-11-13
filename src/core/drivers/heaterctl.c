@@ -16,10 +16,12 @@
 #define THERMISTOR_POT_HEADROOM             (4.f)
 #define THERMISTOR_HEATER_HEADROOM          (60.f)
 
-#define HEATER_WATCHDOG_INTERVAL_MS         (5000)
+#define HEATER_WATCHDOG_INTERVAL_MS         (5000u)
+#define HEATER_OVERHEAT_CONFIRM_MS          (1000u) // 1s sustained fault to trip
 #define HEATERCTL_INTERVAL_MS               (25u) // ms
 
 static heater_faults_t heater_ctl_faults = 0;
+static uint32_t last_overheat_fault_at[COUNT_RC_SENSORS];
 
 static float heater_pot_temp_target = 0;
 static bool heater_element_enabled = false;
@@ -58,6 +60,22 @@ float heater_read_cached_sensor(const rc_temp_sensor_t sensor) {
     return cached_sensors_data[sensor];
 }
 
+static bool heater_overheat_confirmed(const rc_temp_sensor_t sensor, const bool overheating, const uint32_t now) {
+    // if there is ONE reading that is under limit, CLEAR the latch
+    if (!overheating) {
+        last_overheat_fault_at[sensor] = 0u;
+        return false;
+    }
+    // if this offense has no precedent, latch it, not confirmed yet
+    if (last_overheat_fault_at[sensor] == 0u) {
+        // 0 is reserved as sentinel, in practice this is impossible to override
+        last_overheat_fault_at[sensor] = now != 0u ? now : 1u; // just in case
+        return false;
+    }
+    // if enough time has passed between this fault & the latched one -> SHIT
+    return now - last_overheat_fault_at[sensor] >= HEATER_OVERHEAT_CONFIRM_MS;
+}
+
 void task_heater_update_thread(void *args) {
     while (1) {
         // Pet watchdog trong thread heater (mỗi 25ms)
@@ -76,6 +94,8 @@ void task_heater_update_thread(void *args) {
         if (!local_heater_enabled || local_heater_ctl_faults != 0u) {
             rc_heater_set(false);
             critical heater_element_enabled = false;
+            last_overheat_fault_at[RC_SENSOR_POT] = 0u;
+            last_overheat_fault_at[RC_SENSOR_HEATER] = 0u;
             xthreads_sleep(HEATERCTL_INTERVAL_MS);
             continue;
         }
@@ -94,10 +114,13 @@ void task_heater_update_thread(void *args) {
         ;
 
         // overheat protection (element)
-        const bool element_overheat = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;
-        const bool pot_overheat = pot_tmp >= HEATER_POT_MAX_SAFETY_CEILING;
+        const bool element_too_hot = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;
+        const bool pot_too_hot = pot_tmp >= HEATER_POT_MAX_SAFETY_CEILING;
+        const bool element_overheat = heater_overheat_confirmed(RC_SENSOR_HEATER, element_too_hot, current_time);
+        const bool pot_overheat = heater_overheat_confirmed(RC_SENSOR_POT, pot_too_hot, current_time);
 
 #ifndef MASK_HEATER_OVERHEAT_FAULT
+        // confirmed that a 1s long fault window is indeed going on, latch now
         if (element_overheat || pot_overheat) {
             rc_heater_set(false); // emergency off
             critical {
@@ -105,6 +128,12 @@ void task_heater_update_thread(void *args) {
                 if (pot_overheat)     heater_ctl_faults |= HEATER_POT_OVERHEAT_FAULT;
                 heater_element_enabled = false; // just to be sure
             }
+            goto proc_end;
+        }
+        // a spike is enough to temporary kick it offline for this tick,
+        // but not latch the fault yet
+        if (element_too_hot || pot_too_hot) {
+            rc_heater_set(false);
             goto proc_end;
         }
 #endif
