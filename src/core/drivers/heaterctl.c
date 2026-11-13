@@ -3,7 +3,8 @@
 #include "include/platform.h"
 #include "include/xthreads.h"
 
-#define HEATER_ELEMENT_MAX_SAFETY_CEILING   (320.f)
+#define HEATER_ELEMENT_MAX_SAFETY_CEILING   (340.f)
+#define HEATER_ELEMENT_CONTROL_CEILING      (265.f)
 #define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
 #define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
@@ -12,7 +13,8 @@
 
 #define ALLOWED_POT_MIN_TEMP                (10.f)
 #define ALLOWED_POT_MAX_TEMP                (200.f)
-#define THERMISTOR_HEADROOM                 (4.f)
+#define THERMISTOR_POT_HEADROOM             (4.f)
+#define THERMISTOR_HEATER_HEADROOM          (45.f)
 
 #define HEATER_WATCHDOG_INTERVAL_MS         (5000)
 #define HEATERCTL_INTERVAL_MS               (25u) // ms
@@ -83,8 +85,13 @@ void task_heater_update_thread(void *args) {
         const uint32_t current_time = rc_time_current_millis();
         const bool heater_currently_on = rc_heater_is_on();
 
-        const bool heater_should_start = pot_tmp < local_pot_target_temp - THERMISTOR_HEADROOM;
-        const bool heater_should_stop = pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM;
+        // heater can only start up if its temp <= ceiling - hysteresis to stop rapid clicking
+        const bool heater_should_start =  heater_tmp <= HEATER_ELEMENT_CONTROL_CEILING - THERMISTOR_HEATER_HEADROOM
+            && pot_tmp < local_pot_target_temp - THERMISTOR_POT_HEADROOM
+        ;
+        const bool heater_should_stop = pot_tmp > local_pot_target_temp + THERMISTOR_POT_HEADROOM ||
+            heater_tmp > HEATER_ELEMENT_CONTROL_CEILING // avoid thermal runaway by preemping it early at ceiling
+        ;
 
         // overheat protection (element)
         const bool element_overheat = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;

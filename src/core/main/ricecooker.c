@@ -32,7 +32,7 @@
 #define MIN_CONFIG_TIME_MINS         (1)
 #define MAX_CONFIG_TIME_MINS         (99u * 60 + 59u)
 #define MIN_CONFIG_TEMP              (60)
-#define MAX_CONFIG_TEMP              (105)
+#define MAX_CONFIG_TEMP              (150)
 
 // digit consts
 static constexpr digit_t BLANK[4] = {CHAR_NULL, CHAR_NULL, CHAR_NULL, CHAR_NULL};
@@ -496,10 +496,35 @@ static void faults_report_to_ecc(const uint8_t metadata) {
     }
 }
 
+static void send_heater_report(const bool best_effort, const uint32_t current_time,
+    const float pot_temp, const float element_temp
+) {
+    // report to ecc layer
+    if (ecc_is_layer_ready()) {
+        const uint32_t raw_pottmp = ricf32u32(pot_temp); // float to raw bits
+        const uint32_t raw_elementtmp = ricf32u32(element_temp);
+        const uint8_t report[] = {
+            UNPACK_U32_BE(current_time), // time for graph
+            UNPACK_U32_BE(raw_pottmp), UNPACK_U32_BE(raw_elementtmp), // sensors
+            heater_is_enabled(), // heater control plane enabled
+            rc_heater_is_on() // physical heating element ON
+        };
+        // best effort or serious business send
+        (best_effort ? lrcmdctl_ob_send_async : lrcmdctl_ob_send)(
+            RAOB_HEATER_REPORT, report, sizeof(report)
+        );
+    }
+}
+
 static void cooking_watchdog_tick(const uint32_t current_time) {
     // watchdog for heater faults (error code 33 -> 63)
     const heater_faults_t hfaults = heater_get_faults();
     if (hfaults != 0) {
+        // send current temp blocking report to ecc
+        send_heater_report(false, current_time,
+            heater_read_cached_sensor(RC_SENSOR_POT),
+            heater_read_cached_sensor(RC_SENSOR_HEATER)
+        );
         system_error_code = 0b100000; // base (32) heater error code (or with the mask)
         // element overheat: code 33 (bi = by itself) pot overheat: code 34 (bi);
         // heater underheat: code 36 (bi); pot underheat: code 40 (bi)
@@ -519,18 +544,7 @@ static void cooking_watchdog_tick(const uint32_t current_time) {
         timestamp_last_pot_temp_sample = current_time;
 
         // report to ecc layer
-        if (ecc_is_layer_ready()) {
-            const uint32_t raw_pottmp = ricf32u32(pot_temp); // float to raw bits
-            const uint32_t raw_elementtmp = ricf32u32(element_temp);
-            const uint8_t report[] = {
-                UNPACK_U32_BE(current_time), // time for graph
-                UNPACK_U32_BE(raw_pottmp), UNPACK_U32_BE(raw_elementtmp), // sensors
-                heater_is_enabled(), // heater control plane enabled
-                rc_heater_is_on() // physical heating element ON
-            };
-            // best effort send
-            lrcmdctl_ob_send_async(RAOB_HEATER_REPORT, report, sizeof(report));
-        }
+        send_heater_report(true, current_time, pot_temp, element_temp);
     }
 }
 
@@ -599,6 +613,7 @@ static uint8_t stage_setpoint_index = 0;
 
 // this prevent the first initial heatup to be treated as boil dry
 static bool boil_plateau_seen = false;
+static bool water_boiled_away = false;
 
 void reset_cooking_context(void) {
     active_profile = nullptr;
@@ -606,6 +621,7 @@ void reset_cooking_context(void) {
     timestamp_stage_start = 0;
     stage_setpoint_index = 0;
     boil_plateau_seen = false;
+    water_boiled_away = false;
 }
 
 static bool has_water_boiled_away(void) {
@@ -656,6 +672,9 @@ static float monotonic_get_target_temp(const uint32_t stage_elapsed_mins) {
 }
 
 void start_task_cooking_now(void) {
+    // prevent stale data from going anywhere
+    reset_cooking_context();
+
     // holding warm is technically NOT a cooking mode, it is a system state!
     if (cooking_mode == MODE_HOLD_WARM) {
         set_app_state(STATE_HOLD_WARM);
@@ -676,7 +695,6 @@ void start_task_cooking_now(void) {
     }
 
     // load cooking profile from preset
-    reset_cooking_context();
     active_profile = cooking_get_profile(cooking_mode);
 
     if (active_profile == nullptr || active_profile->stage_count == 0u || active_profile->stages == nullptr) {
@@ -697,6 +715,9 @@ void on_cooking_pltick(const uint32_t current_time) {
     if (app_state == STATE_HOLD_WARM) {
         return;
     }
+
+    // update for everything except hold warm
+    water_boiled_away = has_water_boiled_away();
 
     // manual mode timeout (static time)
     if (cooking_mode == MODE_MANUAL_USER) {
@@ -732,10 +753,8 @@ void on_cooking_pltick(const uint32_t current_time) {
             }
             break;
         }
-        case TRIGGER_WATER_BOIL_DRY: { // or timeout
-            if (stage_elapsed_ms >= current_stage->ceiling_duration_ms ||
-                has_water_boiled_away()
-            ) {
+        case TRIGGER_WATER_BOIL_DRY: { // boiled away or timeout
+            if (water_boiled_away || stage_elapsed_ms >= current_stage->ceiling_duration_ms) {
                 advance_stage = true;
             }
             break;
@@ -908,7 +927,7 @@ bool on_cmd_datagram_recv(const ib_cmd_type_t cmd_type, const uint16_t payload_s
                 delayed_mode_configured, UNPACK_U16_BE(delayed_mode_time_mins),
                 // detailed cooking data (could be nonsensical)
                 active_stage_idx, stage_setpoint_index, UNPACK_U32_BE(timestamp_stage_start),
-                boil_plateau_seen, tempstats_sample_size(), // should be enough
+                water_boiled_away, boil_plateau_seen, tempstats_sample_size(), // should be enough
                 UNPACK_U32_BE(ts_avg_bits), UNPACK_U32_BE(ts_linreg_bits)
             };
             return lrcmdctl_ob_send(RSOB_APP_STATE_REPORT, report, sizeof(report));

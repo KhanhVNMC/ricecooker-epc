@@ -256,7 +256,7 @@ float rc_sensor_read_raw_temp(const rc_temp_sensor_t sensor) {
     return temp_celsius;
 }
 
-#define HISTORY_CIRCULAR_BUF_SIZE (5u)
+#define HISTORY_CIRCULAR_BUF_SIZE (9u)
 typedef struct {
     float window[HISTORY_CIRCULAR_BUF_SIZE];
     uint8_t window_ptr;
