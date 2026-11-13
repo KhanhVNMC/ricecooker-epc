@@ -4,8 +4,6 @@
 #include "include/cmath.h"
 #include "microtime.h"
 #include <fastmath.h>
-#include <stdlib.h>
-#include <time.h>
 
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
@@ -282,8 +280,16 @@ float rc_sensor_read_normalized_temp(const rc_temp_sensor_t sensor) {
     const uint8_t n = history->window_fill;
     float sorted[HISTORY_CIRCULAR_BUF_SIZE]; // copy to stack
     memcpy(sorted, history->window, n * sizeof(float)); // to not mess up the ringbuf
-    // ascending sort to find median
-    qsort(sorted, n, sizeof(float), qscompascf);
+    // insertion ascending sort to find median
+    for (uint8_t i = 1; i < n; ++i) {
+        const float pivot = sorted[i];
+        int j = i - 1;
+        while (j >= 0 && sorted[j] > pivot) {
+            sorted[j + 1] = sorted[j];
+            j--; // shift left
+        }
+        sorted[j + 1] = pivot;
+    }
     if (history->window_fill % 2 == 0) {
         // if even, return the avg of the two
         return (sorted[(n / 2) - 1] + sorted[n / 2]) / 2.0f;

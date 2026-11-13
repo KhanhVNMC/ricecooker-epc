@@ -5,13 +5,6 @@
 
 #define arrsize(array) (sizeof(array) / sizeof((array)[0]))
 
-// ascending comparator
-static inline int qscompascf(const void *a, const void *b) {
-    const float fa = *(const float*)a;
-    const float fb = *(const float*)b;
-    return (fa > fb) - (fa < fb);
-}
-
 // https://en.wikipedia.org/wiki/Linear_interpolation
 static inline float flerp(const float v0, const float v1, const float t) {
     return (1 - t) * v0 + t * v1;
