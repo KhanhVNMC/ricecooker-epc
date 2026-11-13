@@ -4,6 +4,8 @@
 #include "include/cmath.h"
 #include "microtime.h"
 #include <fastmath.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define TM1637_GPIO_PORT    GPIOB
 #define TM1637_CLK_PIN      GPIO_PIN_10
@@ -235,7 +237,7 @@ static uint16_t adc_read_channel(const uint32_t channel) {
     return val;
 }
 
-float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
+float rc_sensor_read_raw_temp(const rc_temp_sensor_t sensor) {
     const uint32_t channel = (sensor == RC_SENSOR_POT) ? ADC_CHANNEL_1 : ADC_CHANNEL_2;
 
     // take the average of 8 samples
@@ -254,6 +256,39 @@ float rc_sensor_get_temp(const rc_temp_sensor_t sensor) {
     const float temp_celsius = (1.0f / steinhart) - 273.15f;
 
     return temp_celsius;
+}
+
+#define HISTORY_CIRCULAR_BUF_SIZE (5u)
+typedef struct {
+    float window[HISTORY_CIRCULAR_BUF_SIZE];
+    uint8_t window_ptr;
+    uint8_t window_fill;
+} sensor_history_t;
+
+static sensor_history_t sensor_history[COUNT_RC_SENSORS] = {
+    {{}, 0, 0 }, {{}, 0, 0 }
+};
+
+float rc_sensor_read_normalized_temp(const rc_temp_sensor_t sensor) {
+    if (sensor >= COUNT_RC_SENSORS) {
+        return -999.9f; // trip immediately
+    }
+    sensor_history_t *history = &sensor_history[sensor];
+    history->window[history->window_ptr] = rc_sensor_read_raw_temp(sensor);
+    if (history->window_fill < HISTORY_CIRCULAR_BUF_SIZE) { history->window_fill++; }
+    history->window_ptr = (history->window_ptr + 1) % HISTORY_CIRCULAR_BUF_SIZE;
+
+    // return the median of the current ringbuffer snapshot
+    const uint8_t n = history->window_fill;
+    float sorted[HISTORY_CIRCULAR_BUF_SIZE]; // copy to stack
+    memcpy(sorted, history->window, n * sizeof(float)); // to not mess up the ringbuf
+    // ascending sort to find median
+    qsort(sorted, n, sizeof(float), qscompascf);
+    if (history->window_fill % 2 == 0) {
+        // if even, return the avg of the two
+        return (sorted[(n / 2) - 1] + sorted[n / 2]) / 2.0f;
+    }
+    return sorted[n / 2];
 }
 
 void rc_heater_set(const bool on) {

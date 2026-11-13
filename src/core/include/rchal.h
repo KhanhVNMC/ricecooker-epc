@@ -28,7 +28,8 @@ void rc_buzzer_set_tone(uint16_t freq_hz);
 
 void rc_dbg_led_set(bool on);
 
-float rc_sensor_get_temp(rc_temp_sensor_t sensor);
+float rc_sensor_read_raw_temp(rc_temp_sensor_t sensor);
+float rc_sensor_read_normalized_temp(rc_temp_sensor_t sensor);
 
 bitmask8_t rc_buttons_get_state(void);
 

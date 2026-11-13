@@ -4,7 +4,6 @@
 #include "include/xthreads.h"
 
 #define HEATER_ELEMENT_MAX_SAFETY_CEILING   (320.f)
-#define HEATER_ELEMENT_CONTROL_CEILING      (230.f)
 #define HEATER_POT_MAX_SAFETY_CEILING       (160.f) // deg C
 #define GLOBAL_MIN_SAFETY_CEILING           (0.f) // NEVER happen if the sensors arent cooked
 
@@ -63,8 +62,8 @@ void task_heater_update_thread(void *args) {
         platform_watchdog_pet();
 
         // cache here so other threads can read w/o contention
-        cached_sensors_data[RC_SENSOR_POT] = rc_sensor_get_temp(RC_SENSOR_POT);
-        cached_sensors_data[RC_SENSOR_HEATER] = rc_sensor_get_temp(RC_SENSOR_HEATER);
+        cached_sensors_data[RC_SENSOR_POT] = rc_sensor_read_normalized_temp(RC_SENSOR_POT);
+        cached_sensors_data[RC_SENSOR_HEATER] = rc_sensor_read_normalized_temp(RC_SENSOR_HEATER);
 
         xthreads_csenter(); // critical section
         const bool local_heater_enabled = heater_element_enabled;
@@ -84,19 +83,14 @@ void task_heater_update_thread(void *args) {
         const uint32_t current_time = rc_time_current_millis();
         const bool heater_currently_on = rc_heater_is_on();
 
-        const bool heater_should_start =
-            pot_tmp < local_pot_target_temp - THERMISTOR_HEADROOM
-            && heater_tmp <= HEATER_ELEMENT_CONTROL_CEILING
-        ;
-        const bool heater_should_stop =
-            pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM
-            || heater_tmp > HEATER_ELEMENT_CONTROL_CEILING
-        ;
+        const bool heater_should_start = pot_tmp < local_pot_target_temp - THERMISTOR_HEADROOM;
+        const bool heater_should_stop = pot_tmp > local_pot_target_temp + THERMISTOR_HEADROOM;
 
         // overheat protection (element)
         const bool element_overheat = heater_tmp >= HEATER_ELEMENT_MAX_SAFETY_CEILING;
         const bool pot_overheat = pot_tmp >= HEATER_POT_MAX_SAFETY_CEILING;
 
+#ifndef MASK_HEATER_OVERHEAT_FAULT
         if (element_overheat || pot_overheat) {
             rc_heater_set(false); // emergency off
             critical {
@@ -106,6 +100,7 @@ void task_heater_update_thread(void *args) {
             }
             goto proc_end;
         }
+#endif
 
         // severe "underheat" (could be rouge sensor) protection
         const bool element_underheat = heater_tmp <= GLOBAL_MIN_SAFETY_CEILING;
