@@ -3,6 +3,8 @@
 cmake_minimum_required(VERSION 3.22)
 project(ricecooker_stm32f1c8 LANGUAGES C ASM)
 add_compile_options(-gdwarf-2)
+# still optimize (so the firmware wont overflow out of the flash), but still debug-able
+set(CMAKE_C_FLAGS_DEBUG "-Og -g3")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(RICECOOKER_ROOT "${CMAKE_CURRENT_LIST_DIR}/../..")
