@@ -531,7 +531,7 @@ static void cooking_watchdog_tick(const uint32_t current_time) {
         );
         system_error_code = 0b100000; // base (32) heater error code (or with the mask)
         // element overheat: code 33 (bi = by itself) pot overheat: code 34 (bi);
-        // heater underheat: code 36 (bi); pot underheat: code 40 (bi)
+        // heater rogue: code 36 (bi); pot rogue: code 40 (bi)
         // poor contact: code 48 (bi)
         system_error_code |= hfaults;
         reset_app_state(STATE_SYSTEM_ERROR);
