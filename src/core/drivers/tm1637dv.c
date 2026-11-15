@@ -170,7 +170,7 @@ void display_scroll_tick(void) {
         digits[i] = sc_buffer[(sc_window_start + i) % sc_buffer_size];
     }
     set_characters(digits, sc_display_colon);
-    sc_window_start++;
+    sc_window_start = (sc_window_start + 1) % sc_buffer_size;
 }
 
 void display_clear_cache(void) {
