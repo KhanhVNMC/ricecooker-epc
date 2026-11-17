@@ -19,7 +19,7 @@
 // TUNING FOR THE BOIL/BOIL DRY SYSTEM: TESTED ON REAL HARDWARE (13/11/2026)
 #define WATER_BOIL_PLATEAU_MIN_TEMP       (118.0f)
 #define WATER_BOIL_PLATEAU_MAX_ABS_SLOPE  (0.03f)
-#define WATER_BOIL_DRY_MIN_SLOPE          (0.05f)
+#define WATER_BOIL_DRY_MIN_SLOPE          (0.07f)
 #define WATER_BOIL_DRY_MIN_TEMP           (131.0f)
 
 typedef enum : uint8_t {
