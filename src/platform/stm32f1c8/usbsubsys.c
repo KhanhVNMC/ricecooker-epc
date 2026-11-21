@@ -266,7 +266,7 @@ static uint8_t* usb_get_manufacturer_string(USBD_SpeedTypeDef, uint16_t *length)
 }
 
 static uint8_t* usb_get_product_string(USBD_SpeedTypeDef, uint16_t *length) {
-    // flower saint -> hoa thánh -> thanh hóa
+    // shhhh
     USBD_GetString((uint8_t*) "Flower Saint Cooker", usb_string_buf, length);
     return usb_string_buf;
 }
